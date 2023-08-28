@@ -1,0 +1,3929 @@
+
+var packageLoaded;
+var emptyGuid = "00000000-0000-0000-0000-000000000000";
+var triggerHIWStage = false;
+var environment = window.location.host.split('.')[0];
+var isLocal = window.location.host.indexOf('local') > -1;
+var intlportal = ["luk", "lfr", "les", "lit", "lde", "lbr", "lnl", "lpl", "lpt", "ldk", "lsw", "lmx"];
+var availableCountryCDs = ["ca", "au", "nz", "ae", "be", "br", "ch", "cl", "de", "es", "fr", "gh", "in", "it", "mx", "ph", "sg", "za","bd","id","ke","my","na","ng","pk","pe","pr","sa","tz","zm","ie","tt"];
+window.EUCountries =["BR","DE","MX","FR","ES","IT","CH","BE","CL","IN","SG","AE","ZA","PH","GH"];
+window.ROWCountries =["BD","ID","KE","MY","NA","NG","PK","PE","PR","SA","TZ","ZM","IE","TT"];
+var _tsa = {};
+var vstr = "",
+    userType = "",
+    url = "",
+    path = "",
+    isLoggedin = "";
+window.RDL = window.RDL || {};
+RDL.environmentURL = '';
+RDL.handlepostpageload = false;
+RDL.readCookie = function (name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+}
+RDL.GetQueryString = function (field) {
+    var href = decodeURI(window.location.href);
+    var reg = new RegExp('[?&]' + field + '=([^&#]*)', 'i');
+    var string = reg.exec(href);
+    return string ? string[1] : null;
+};
+
+RDL.createCookie = function (name, value, days) {
+    var expires = "";
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = " ; expires=" + date.toGMTString();
+    } else
+        expires = "";
+    document.cookie = name + "=" + value + expires + "; path=/;domain=." + RDL.Portal.url;
+}
+RDL.ASSETS_IDENTIFIER = 'assets.';
+var isSkipAssetUrl = RDL.readCookie('skipassetsurl') == 1;
+RDL.useAssetsPath = !(intlportal.indexOf(RDL.Portal.portalCd) > -1) && RDL.ASSETS_IDENTIFIER && !isSkipAssetUrl;
+RDL.useAssetsPath = window.RDL.Portal && window.RDL.Portal.useAssetsPath && RDL.ASSETS_IDENTIFIER && !isSkipAssetUrl ? true : RDL.useAssetsPath;
+RDL.getAssetsURL = function () {
+    var assetsUrl = ""; 
+    if (RDL.useAssetsPath) {
+     var env = window.location.host.split('.')[0];
+     var domain = window.location.host.split(':')[0].substr(window.location.host.indexOf('.') + 1);       
+     switch (env) {       
+        case 'qa':
+        case 'reg':
+        case 'stg':
+            assetsUrl = "https://" + env + "-" + RDL.ASSETS_IDENTIFIER  + (window.RDL.Portal.useAssetsPath?domain:window.location.host.split('.')[1] + '.' + window.location.host.split('.')[2]) ; break;
+        case 'www':
+            assetsUrl = "https://" + RDL.ASSETS_IDENTIFIER + (window.RDL.Portal.useAssetsPath?domain:window.location.host.split('.')[1] + '.' + window.location.host.split('.')[2]); break;
+   }
+ } 
+     return assetsUrl;
+}
+
+RDL.getResourceUrl = function () {    
+    var portalcd = (RDL.Portal.portalCd == "rna" || RDL.Portal.portalCd == "cln") ? "rna" : RDL.Portal.portalCd;
+    var assetsUrl = RDL.getAssetsURL();
+    if (isLocal) {       
+        return window.location.protocol + "//" + RDL.Portal.blobContentDevURL + (portalcd === 'rna' ? 'rsm' : portalcd) + "/";
+    }
+    else if(RDL.isLiteBuilder && RDL.liteFlowRootURLCultureSlug){
+        return assetsUrl ? (assetsUrl + "/" + RDL.liteFlowRootURLCultureSlug  + "/blobcontent/" + (portalcd === 'rna' ? 'rsm' : portalcd) + "/") :
+        (window.location.protocol + "//" + window.location.hostname +"/"+ RDL.liteFlowRootURLCultureSlug + "/blobcontent/" + (portalcd === 'rna' ? 'rsm' : portalcd) + "/");
+    }
+    else {
+        return assetsUrl ? assetsUrl + "/blobcontent/" + (portalcd === 'rna' ? 'rsm' : portalcd) + "/" : 
+            window.location.protocol + "//" + window.location.hostname + "/blobcontent/" + (portalcd === 'rna' ? 'rsm' : portalcd) + "/";
+    }
+}
+window.mixpanelSyncForMX = function () {
+    //mixpanel account handling for MX-ES cross domain case
+    var anonymousIdMX = window.location.search.split("anonymousIdMX=")[1] || RDL.anonymousIdMX;
+    if (anonymousIdMX && anonymousIdMX.length > 0) {
+      anonymousIdMX = anonymousIdMX.indexOf("&") > -1
+        ? anonymousIdMX.substring(0, anonymousIdMX.indexOf("&"))
+        : anonymousIdMX;
+      analytics && analytics.identify(anonymousIdMX);
+      RDL.anonymousIdMX = anonymousIdMX;
+    }
+}
+
+RDL.getApiUrl = function (isV2,isEcom,isV3) {
+    var environment = window.location.host.split('.')[0];
+    var configName = "qa";
+    var baseUrl = "";
+    var apiEnvironment = RDL.environmentURL || environment;
+    baseUrl = apiEnvironment != "www" ? "https://api-@@env-embedded-builder." + RDL.Portal.url + "/api/v1/" : "https://api-embeddedbuilder." + RDL.Portal.url + "/api/v1/";
+    baseUrl=isEcom?
+    (apiEnvironment != "www" ? "https://api-@@env-embeddedecom." + RDL.Portal.url + "/api/v1/" : "https://api-embeddedecom." + RDL.Portal.url + "/api/v1/")
+    :baseUrl;
+    switch (apiEnvironment) {
+        case "reg":
+        case "regression":
+        case "pre-reg":
+        case "pen":
+            configName = "reg";
+            break;
+        case "loc":
+            configName = "qa";
+            break;
+        case "stg":
+            configName = "stg";
+            break;
+        case "perf":
+            configName = "perf";
+            break;
+        case "www":
+            break;
+    }
+    var returnUrl = baseUrl.replace('@@env', configName);
+
+    if(RDL.Portal.removeOptionsCall && !isLocal)
+    {
+        returnUrl=window.location.protocol+"//"+window.location.hostname+(isEcom ? "/ecom/" : "/eb/")+"api/v1/";
+    }
+    if(RDL.isLiteBuilder && RDL.liteFlowRootURLCultureSlug && RDL.Portal.removeOptionsCall && !isLocal){
+        returnUrl=window.location.protocol+"//"+window.location.hostname+"/"+ RDL.liteFlowRootURLCultureSlug +(isEcom ? "/ecom/" : "/eb/")+"api/v1/";
+    }else if(RDL.isLiteBuilder && isLocal){
+        returnUrl=RDL.Portal.ebApiUrl?RDL.Portal.ebApiUrl:returnUrl;
+    }
+
+    return isV2 ? returnUrl.replace('v1', 'v2') : isV3 ? returnUrl.replace('v1', 'v3') : returnUrl;
+}
+
+RDL.Experiments = { 
+    GoogleOneTapv2:"01dcd324-1bf9-44d1-ad4e-4de04e198e0a",
+    scheduleInterview : "6c51e3f9-294f-4f2c-8bc2-a75ab3462198",
+    desktopImprovements : "9822172f-71a2-4c2d-b0a0-2bf3a93a55a3",
+    SynonymDatePickerAutoSuggest : "376fb086-4427-4080-a1c8-a72ea3188ce1",
+    resumeButtons : "8399938e-9b69-4613-b57a-72ed95419115", 
+    rnDownloadFunnel: "5fb91e7e-4551-4566-95ba-f08cb3e6f8cb",
+    payPerDownloadCLN : "0dfa6df2-829b-4a67-8872-158b95e3ab77",
+    payPerDownloadCLNMob : "d8f75b54-2c5b-45bd-9996-5f390b4d0295",
+    finalPageRedesign:"23aa78f1-e3b4-4f72-ae91-eb9317bbd9e4", // Changed exp id to MS word style exp version
+    resumeButtonV3:"edaeded3-1f8b-4baf-b6b7-070a3e955a64",
+    finalizePageWarningModal:"6bd30c10-9940-4d86-a97d-2862dd85ce72",
+    previewModalImprovement: "0962f430-cc2c-4f80-a402-ad728234cc5c",
+    autoSuggestTTC: "522da59d-ea39-4b13-9692-ac0df9f65bcd",
+    templateRandomizationRN: "60b30ab9-cac9-4da5-8ef0-e4053fcd7117",
+    uploadFlowImprovements: "f7c89244-21e5-4bfd-8e40-d2dc333ab13d",
+    reasonForResume: '95de192a-6d20-4852-ba09-0c27d9a9905d',
+    simplifyContact :'0dfb247f-1143-4af8-96f4-fe7e174ceabe',
+    uploadParsingBGUpgrade: '45d865a7-484b-4df4-89a5-8fa62a1557dc',
+    resumeOptionImportMsg: '1fbfe129-5426-447b-8e2a-5adbbb1c29e1',
+    autosuggestNonUS: 'b7f6a254-be30-462a-8462-6a9ad5d17000',
+	skipSections : '92a385e4-dcf5-42a2-9c3f-d7627679f258',    
+    whttcupdatesV2 : '188100cb-4076-49a4-b41c-d655c8be6207',    
+    bigPreviewRN : 'e9cb5a03-ab55-4624-b4db-aedc11413fa6',
+    recommendedTemplatesRN: '454cf469-7e8c-42c9-bf90-c3d8339ca7b4',
+    finalizeToEcomm: '8af2bd11-81e7-4a23-b0ec-581cd5ef09bd',
+    uploadFromLP : 'c27b0806-9f12-467d-91dc-ad32b67dff36',
+    superStreamlinedFlow: '4659c0e4-8eb3-482a-96b0-cbef176cb874',
+    premiumTTC : '2521fc3f-e307-434d-8c56-6b36e092deee',
+    simplifiedForms: 'e5c3a33e-b98c-424f-b1c7-14f15b4ecc26',
+    sixSkinRecommendation: '2bc1d7b8-c9ac-4d18-a40b-4576e1f932f7',
+    closeAlert : 'fb3e7216-e888-446e-b9a6-1a4de69babc5',
+    whRecommPopup:'7ef9d8fe-35aa-4971-ad93-4e737c189be1',
+    summaryFirst : 'f9eb7d41-b360-4fbb-919b-98d53f09aca3',
+    updateTipsCopies: '76c1026b-0e01-40c2-a801-d89e68df788e',
+    finalizeAccordianDesign : '8f8355a8-8b6a-4b4e-9955-efa78ea1b630',
+    registrationModalEnhancements: '6bc196c4-fd1c-4db7-a488-374721afe9ee',
+    reminderToUpload : '4a241c15-ebc1-4702-b5a1-fb612e262062',
+    chooseTemplateUIUpdates:'d9b6aa91-72c8-4a41-8be4-1bdef7c94317',
+    speedAndSimplicity:'8d6f20bf-4f39-4e28-8a1f-32c63827f1bf',
+    GoogleOneTapv3: '8f37224f-c7a2-4905-b13e-348250e2f90b',
+    resumeTrackingV2: 'b28f8bf4-f647-4099-861a-6f8936fb94a2',
+    fullFunnelUIImprovement: '4e7d0a49-8da8-4b8b-aa32-2f34a5ef1710',
+    inlineOnBoardingPersonalization : '5f090948-95b6-4708-bdac-0a66701f1989',
+    uploadExperiencePopup: '65498d59-dd4c-4b0d-be90-9cdb9bbe14cc',
+    CSKSkillsTest:'0d022296-6617-4b06-83c2-87f4e574e43a',
+    minimalContactPage: '33aec338-c354-4a00-bbdb-918152384417',
+    finalizePagePromoteServices: '6d84b381-7973-473f-9fd7-8d931023af48',
+    optimizeTemplateSearcher : '763aebd9-1ab1-42d1-bf08-b1aa892745a3',
+    socialLinksRN:'8bc4e19b-b247-423f-b72f-45a18a123d85',
+    blueSkyTTC:'d878f60b-ab20-402e-ae31-72b218a3efe6',
+    extendedColorPicker:'e1711442-54cc-4f1d-ab11-966cbf10f63d',
+    autoSaveFillBlankPreviewUpload: "304bf06e-474d-4ef1-b2d6-a338a8411eb4",
+    resumeMerchandise: "bae53c3e-9a24-4ced-9c03-80e3b1e5153f",
+    rnGPTParser:"cab0d0ae-bcdc-4704-b696-afe869a9563f",
+    premiumTTCV2: 'af99aec8-e2b7-41f6-8685-d6aa6cc9a4f5',
+    secBreakPlaceHolderImpPreview : "d431718e-71db-4684-9366-19d9f3aa526f",
+    contextualFunnelExp: '8184744a-42fb-4c4f-961e-4ae5a813ff21',
+    aiAutoCoverLetter : 'f0e96459-9f22-4c90-ba03-0005552c8d76',
+    blueSkyTTCV2:'12237652-a65d-4aab-b677-41a18d6db374'
+}
+RDL.lazyLoad = true;
+RDL.isLiteBuilder = typeof isLiteBuilder !== "undefined" && isLiteBuilder;
+RDL.isSecondaryPortal = typeof isSecondaryPortal !== "undefined" && isSecondaryPortal;
+RDL.countrySlug = typeof liteFlowcountrySlug !== "undefined" && liteFlowcountrySlug;
+RDL.liteFlowRootURLCultureSlug = typeof liteFlowRootURLCultureSlug !== "undefined" && liteFlowRootURLCultureSlug;
+RDL.liteFlowCultureCD = typeof liteFlowCultureCD !== "undefined" && liteFlowCultureCD;
+RDL.portalCultureCD = typeof liteFlowCultureCD !== "undefined" && liteFlowCultureCD;
+RDL.sourceAppCD = '';
+RDL.onBoardingPersonalizedTip = false;
+RDL.onBoardingQuesChange = false;
+RDL.builderVersion = "rb wizard";
+RDL.previousDocuments = [];
+RDL.avoidLoggedinCss = false;
+RDL.showHeader = true;
+RDL.prevDocTabVisible = false;
+RDL.Localization = "";
+RDL.Definition_Tips = [];
+RDL.isLoadJS = true;
+RDL.strategyId = 25;
+if (location.host.split('.')[0] == "www" && RDL.Portal.newRelicId != "") {
+    addNewRelic(RDL.Portal.newRelicId);
+}
+RDL.mapsClientKey = "gme-boldna";
+RDL.isloggedIn = false;
+RDL.gatriggeredFor = "";
+RDL.EnterBuildertriggered = false;
+RDL.pageLoaded = false;
+RDL.applyCardCss = false;
+RDL.showEducationTypePage =false;
+RDL.Paths = {};
+RDL.Paths.ResourcePath = RDL.getResourceUrl();
+RDL.Paths.ImageResourcePath = RDL.Paths.ResourcePath && RDL.isLiteBuilder?RDL.Paths.ResourcePath.replace(RDL.Portal.portalCd,("lclite/"+RDL.Portal.portalCd)):RDL.Paths.ResourcePath;
+window.globalCompVars = {};
+window.globalCompVars.BaseApiUrl = RDL.Paths.BaseApiUrl = RDL.getApiUrl();
+window.globalCompVars.BaseApiUrlV2 = RDL.Paths.BaseApiUrlV2 = RDL.getApiUrl(true);
+window.globalCompVars.BaseApiUrlV3 = RDL.Paths.BaseApiUrlV3 = RDL.getApiUrl(false,false,true);
+window.globalCompVars.EcomBaseApiUrl=RDL.Paths.EcomBaseApiUrl = RDL.getApiUrl(false,true);
+window.globalCompVars.emailId = '';
+RDL.Paths.BasePath = RDL.Portal.slug || RDL.Portal.basePath;
+RDL.Paths.ImageBasePath = window.RDL.Paths.ResourcePath + "images/desktop/";
+RDL.Paths.termsOfUseURL = '';
+RDL.Paths.privacyURL = '';
+RDL.Paths.signoutURL = '';
+RDL.Paths.mysettingsURL = '';
+RDL.Paths.contactUsURL = '';
+RDL.VisitorApiSetting = {};
+RDL.PortalSettings = {};
+RDL.Skins = {};
+RDL.NewSkinTemplates = {};
+RDL.segmentKey = '';
+window.segment = {};
+window.segment.CommonProps = {
+    'Platform': 'Web',
+    'flow name': RDL.builderVersion,
+    'Login Status': 'FALSE'
+}
+RDL.guestUserID = null;
+RDL.guestUserCreated = false;
+RDL.isRefresh = true;
+RDL.isBack = true;
+RDL.isOverviewBack = false;
+RDL.isEditingFinished = false;
+RDL.loadedPageCalled = false;
+RDL.googleClientID = '';
+RDL.facebookClientID = '';
+RDL.scrollPos = 0;
+RDL.maintainScroll = false;
+RDL.Content = [];
+RDL.RJTContent = [];
+RDL.files = [];
+RDL.letterFiles=[]
+RDL.WindowH = window.innerHeight;
+RDL.Paths.signInURL = '';
+RDL.currentZoomValue = 1.5;
+RDL.dragCurrentZoomValue = 1.5;
+RDL.currentZoomIndex = 2;
+RDL.OnBoarding_Popup = true;
+RDL.isBlankName = false;
+RDL.isAnimationCompleted = false;
+RDL.isdragMove = true;
+RDL.isTablet = navigator.userAgent.match(/iPad/i) != null;
+RDL.countryDetails = { countryCode: "", continentCode: "", isEuropianContinent: false, city: "", state: "", isEEACountry: false };
+RDL.INVALID_ATTEMPT = 'accountSignInAttempt';
+RDL.isRWZFlow = isRWZFlow; //To be done conditionally
+RDL.JobTitleContentDetails = { experimentID: "", variation: "" }
+RDL.EmployerContentDetails = { experimentID: "", variation: "" }
+RDL.isResumeCheckFromDashboard = false;
+RDL.isINTL = intlportal.indexOf(RDL.Portal.portalCd) > -1 ? true : false;
+RDL.defaultSkinColor = '';
+RDL.joshuaTree = !window.RDL.isINTL;
+RDL.NewSkinsArray = ["MLF8","MLF9","SLI2"];
+RDL.joshuaTreeINTL = typeof isJoshuaTreeINTL !== "undefined" && isJoshuaTreeINTL;
+RDL.splitFooterLayout = RDL.removeSecondPhone = RDL.joshuaTreeINTL; // Turn feature On based on Joshua Exp
+RDL.cvWritingFlowVariant =  typeof cvWritingFlowVariant !== "undefined"? cvWritingFlowVariant : "0";
+RDL.saveContactOnBack = false;
+RDL.graduationYearUpdate = false;
+RDL.skillRecommendation = false;
+RDL.streamlinedSkills=false;
+RDL.floatingRegistration = false;
+RDL.reOrderCityZipState=false;
+RDL.autoSaveData = false;
+RDL.resetChannel = false;
+RDL.enableGoogleScript = !window.RDL.isINTL;
+RDL.featureCodes = [];
+RDL.FeatureCodesJson = RDL.FeatureCodesJson || '';
+RDL.recommendationFeatureCode = [];
+RDL.recommendationJson = RDL.recommendationJson || '';
+RDL.isCalledSaveJsonDoc = false;
+RDL.isPurgedUserScenario = false;
+RDL.isUpdateDocOnFinalize = false;
+RDL.skipStudentScreen = false;
+RDL.workHistoryTTCChanges = 0;
+RDL.isSMSPopUpViewed = false;
+RDL.isRouteChangeforSMS = false;
+RDL.nativeLocalization={}
+RDL.INVALID_ATTEMPT = 'accountSignInAttempt';
+RDL.isPageRefresh = true;
+RDL.updateDocForPhoto = true;
+RDL.lngDisabled = RDL.isINTL ? true :false;
+RDL.hasCountryQSorCookie= false;
+RDL.hideBtn = "false";
+RDL.seeMoreList = [];
+RDL.recPortalFeature = !RDL.isINTL;
+RDL.colorPickerOptimization = !RDL.isINTL;
+RDL.spellCheckImprovements = !RDL.isINTL;
+RDL.showEXPRSurveyHitCount = 0;
+if (RDL.isTablet) {
+    document.body.classList.add("ipad");
+}
+RDL.defaultSkin = RDL.Portal.defaultSkin;
+RDL.selectedSkin = '';
+RDL.TTCSectionTypeCds = ["EXPR", "EDUC", "SKLL", "SUMM", "HILT", "ACTI", "CERT", "ACCM"];
+RDL.industryContent = {};
+RDL.userCountryCD = '';
+
+RDL.startPageLoader = function () {
+    document.getElementById("page-loader").classList.remove("invisible");
+}
+
+RDL.isHIWAnimationRunning=function()
+{
+    return  document.querySelector(".new-loader-wrapper").innerHTML!="";
+}
+
+window.isIPAD = function () {
+  var _isIPAD = false;
+  if (navigator.userAgent.match(/iPad/i)) {
+    _isIPAD = true;
+  }
+  else {
+    _isIPAD = navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform)
+  }
+  return !!_isIPAD;
+}
+
+RDL.isTouchDevice = function () {
+    return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0));
+}
+
+window.startApp = function (event) {
+    if (event != null) {
+        if(event.currentTarget && event.currentTarget.classList) {
+            if(event.currentTarget.classList.contains("btn-primary")) {
+                RDL.BuilderUsageTrackEvents("clicked","create my resume",null,window.RDL.isloggedIn, "continue");
+            }
+            else {
+                RDL.BuilderUsageTrackEvents("clicked","create my resume",null,window.RDL.isloggedIn, "how to create a job winning cv");
+            }
+        }
+    }
+        event.preventDefault();
+        RDL.startPageLoader();
+        packageLoaded = setInterval(function () {
+        if (window.hiwComponent) {
+            clearInterval(packageLoaded);
+           if(sessionStorage.getItem("showHowItWorks")){
+            window.hiwComponent.navigateToSelectResume();
+           }           
+           else{
+            window.hiwComponent.navigateToChooseTemplate(true);
+           }            
+        }
+    }, 10);
+
+}
+
+RDL.prefecthImg = function (url, alt) {
+  var img = document.createElement('img');
+  img.src=url;
+  if(!alt) img.alt='Image Alt Text';
+  else img.alt=alt;
+  if(document.getElementById('dvHidden')){
+      document.getElementById('dvHidden').appendChild(img);
+  }
+}
+
+RDL.loadHIWCSSFiles = function(src){
+  var link = document.createElement('link');
+  link.type = 'text/css';
+  link.rel = "stylesheet";
+  link.href = src;
+  document.body.appendChild(link);
+  //document.head.appendChild(link);
+ // document.body.insertBefore(link, document.body.firstElementChild);
+}
+//RDL.isRebrand=true;
+if(RDL.GetQueryString('rebrand')==1){ // temp code will do clean up with experiment condition task
+    RDL.isRebrand=true;
+}
+RDL.loadHIWSBuildertaticCSSResources = function(){
+  if(!RDL.isINTL){
+ var fontawesomeFileSrc = RDL.Paths.ResourcePath + 'styles/fontawesome-subset/css/fontawesome-all.min.css';
+  var domain = window.location.host.split('.')[0];
+  var mainCSSBundleSrc = '';
+  if(domain =='local'){
+    // mainCSSBundleSrc = RDL.Paths.rootURL+'/build-resume/build/stylesheets/rbrwz/rwzjt/main.css';
+//mainCSSBundleSrc = 'https://qa.resume-now.com/build-resume/build/stylesheets/rbrwz/rwzjt/main-'+versionNumber +'.css';
+     mainCSSBundleSrc = '/build/stylesheets/rwzjt/main.css';
+  }else{
+     mainCSSBundleSrc = RDL.getAssetsURL() + RDL.Paths.BasePath +'/build/stylesheets/rbrwz/rwzjt/main-'+versionNumber +'.css';
+  }
+  var googleFont1Src = 'https://fonts.googleapis.com/css?family=Work+Sans:300,400,500,600,700|Roboto:500|Merriweather:400,900&display=swap';
+  var googleFont2Src = 'https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Noto+Sans:wght@300;400;500;600;700&family=Nunito:wght@700&family=Open+Sans:wght@400;700&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300;1,400;1,700&family=Saira+Semi+Condensed:wght@400;500;700&family=Fira+Sans:wght@300;400;500;700&family=Blinker:wght@400;700&family=Playfair+Display+SC:wght@700;900&family=Hind:wght@700&family=Lato:wght@400;700;900&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&family=Saira:wght@200;300;400;500;600;700&display=swap';
+  var googleFont3Src = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@500&family=Work+Sans:wght@500;600;700;800&display=swap';
+  if(RDL.isRebrand){ // temp code will do clean up with experiment condition task
+    RDL.loadHIWCSSFiles(googleFont3Src);
+  }else{
+    RDL.loadHIWCSSFiles(googleFont1Src);
+  }
+  RDL.loadHIWCSSFiles(googleFont2Src);
+
+ // RDL.loadHIWCSSFiles(mainCSSBundleSrc);
+  RDL.loadHIWCSSFiles(fontawesomeFileSrc);
+}
+}
+
+
+
+
+
+RDL.callAjax = function (url, method, async, withCredentials, callback, resolve, data, isskipTimestamp, isResolveOnFailure) {
+    var xmlhttp;
+    // compatible with IE7+, Firefox, Chrome, Opera, Safari
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.onload = function () {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            if (callback)
+                if (resolve) {
+                    callback(xmlhttp.responseText, resolve);
+                }
+                else {
+                    callback(xmlhttp.responseText);
+                }
+        }
+        else{
+            if(isResolveOnFailure && callback){
+                callback(xmlhttp.status);
+            }  
+        }       
+    }
+    if (method == "GET" && !isskipTimestamp) {
+        if (url.indexOf('?') == -1)
+            url = url + "?v=" + new Date().getTime();
+        else
+            url = url + "&v=" + new Date().getTime();
+    }
+    xmlhttp.open(method, url, async);
+    if (withCredentials)
+        xmlhttp.withCredentials = true;
+
+    if (data) {
+        xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xmlhttp.send(JSON.stringify(data));
+    }
+    else {       
+        xmlhttp.send();
+    }
+
+    xmlhttp.onerror = function (_err) {
+        if (isResolveOnFailure) {
+            if (callback) {
+                callback();
+            }
+        }
+    };
+    xmlhttp.ontimeout = function (_e) {
+        if (isResolveOnFailure) {
+            if (callback) {
+                callback();
+            }
+        }
+    };
+}
+
+RDL.loadJs = function (src,isPartyTown,async,defer) {    
+        var f = document.getElementsByTagName('script')[0],
+        j = document.createElement('script'); 
+        j.async = (async != null && async != undefined) ? async : true;
+        j.defer = (defer != null && defer != undefined) ? defer : false;
+        j.src = src; 
+        if(isPartyTown){
+            j.type='text/partytown';
+        }
+        f.parentNode.insertBefore(j, f);
+        if(isPartyTown){
+            window.dispatchEvent(new CustomEvent('ptupdate'));
+        }
+    
+}
+
+RDL.replaceWithAssetsUrl= function(url){
+    return url.replace(/qa./, 'qa-assets.').replace(/reg./, 'reg-assets.').replace(/stg./, 'stg-assets.').replace(/www./, 'assets.');
+}
+
+RDL.getConfigPath = function () {
+    var configPath = '';
+    if (RDL.Portal.portalCd == "rna") {
+        if (RDL.isRWZFlow) {
+            configPath = 'config/rn/';
+        }
+        else {
+            configPath = 'rb/config/';
+        }
+    }
+    else if (RDL.Portal.portalCd == "cln") {
+        configPath = 'config/cln/'
+    }
+    else if(RDL.isLiteBuilder){
+        configPath = ''
+    }
+    else {
+        configPath = 'config/'
+    }
+
+    return configPath;
+}
+
+RDL.getConfigUrl = function () {
+    var environment = window.location.host.split('.')[0];
+    var configName = "dev";
+    var baseUrl = window.RDL.Paths.ResourcePath + RDL.getConfigPath();
+    environment = RDL.environmentURL ? RDL.environmentURL : environment;
+    switch (environment) {
+        case "reg":
+        case "regression":
+            configName = "regression";
+            break;
+        case "pre-reg":
+            configName = "pre-reg";
+            break;
+        case "pen":
+            configName = "pen";
+            break;
+        case "loc":
+            configName = "loc";
+            break;
+        case "stg":
+            configName = "stg";
+            break;
+        case "perf":
+            configName = "perf";
+            break;
+        case "www":
+            configName = "prod";
+            break;
+    }
+    var filename = "config." + configName + ".desktop.js?v=" + versionNumber;
+    if(RDL.isINTL){
+        filename = configName + ".desktop.js?v=" + versionNumber; 
+        //#TODO uncomment it
+        if(RDL.isLiteBuilder){ 
+            baseUrl = baseUrl.replace('/' + RDL.Portal.portalCd.toLowerCase() + '/',
+            '/lclite/config/' + RDL.Portal.portalCd.toLowerCase() + '/');
+        }
+    }
+    return baseUrl + filename;
+}
+RDL.isLowerEnvironment = function () {
+    var lowerEnv = ["local", "qa", "reg"];
+    var lower = false;
+    if (environment && lowerEnv.indexOf(environment) > -1) {
+        lower = true;
+    }
+    return lower;
+}
+
+function replaceCultureForLiteFlow(url) {
+    var cultureSlugInURLs = RDL.liteFlowRootURLCultureSlug?'{cultureSlug}':'{cultureSlug}/';
+    if (RDL.isLiteBuilder) {
+        if (url) {
+            url = url.replace(cultureSlugInURLs, RDL.liteFlowRootURLCultureSlug);
+        }
+        return url;
+    }
+    else {       
+        return url;       
+    }
+}
+
+function getCultureCD(cultureCD) {
+    if (RDL.isLiteBuilder && RDL.liteFlowCultureCD) {       
+        return RDL.getLocaleAlongWithCountry(RDL.liteFlowCultureCD);
+    }
+    else {
+        return cultureCD;
+    }
+}
+
+RDL.handleConfig = function (result, resolve) {
+    var data = JSON.parse(result);
+    //window.RDL.Paths.BasePath = data.url_build_resume
+    RDL.moveHeaderContainerToTips=data.moveHeaderContainerToTips || false;
+    RDL.defaultFeatureCode = data.defaultFeatureCode;
+    RDL.elligibleLanguages = data.elligibleLanguages;
+    RDL.Portal.gtmKey1 = data.gtmKey1;
+    RDL.Portal.gtmKey2 = data.gtmKey2;
+    RDL.enableInterceptModal = data.enableInterceptModal || false;
+    RDL.enableAdditionalDetailsOnContact = data.enableAdditionalDetailsOnContact || false;
+    RDL.sourceAppCD = data.sourceAppCD;
+    RDL.Portal.optimizelyKey = data.optimizelyKey;
+    RDL.imageOptimization = data.imageOptimization;
+    RDL.builderImagePath = (RDL.imageOptimization ? 'builder/images/':'images/desktop/');
+    RDL.Paths.ImageResourcePath = RDL.Portal.imageOptimizationRewrite?RDL.Paths.ImageResourcePath.replace("blobcontent","blobimages"):RDL.Paths.ImageResourcePath;
+    window.RDL.Paths.ImageBasePath = RDL.Paths.ImageResourcePath + RDL.builderImagePath;
+    window.RDL.Paths.interceptLink = data.externalLinks.interceptLink;
+    window.RDL.Paths.BaseUrl = replaceCultureForLiteFlow(data.externalLinks.dashboardLink);
+    window.RDL.Paths.CDN_Path1 = data.externalLinks.cdnPath1;
+    window.RDL.Paths.CDN_Path2 = data.externalLinks.cdnPath2;
+    window.RDL.Paths.SellPageUrl = replaceCultureForLiteFlow(data.externalLinks.paymentLink);
+    window.RDL.Paths.AccountsURL = replaceCultureForLiteFlow(data.externalLinks.accountsURL);
+    window.RDL.Paths.termsOfUseURL = data.externalLinks.termsOfUseURL;
+    window.RDL.Paths.privacyURL = data.externalLinks.privacyURL;
+    window.RDL.Paths.coverLetterUrl=data.externalLinks.coverLetterUrl;
+    window.RDL.Paths.rootURL = data.externalLinks.rootURL;
+    window.RDL.Paths.rguURL = replaceCultureForLiteFlow(data.externalLinks.rguURL);
+    window.RDL.Paths.contactUsURL = data.externalLinks.contactUs;
+    window.RDL.Paths.mysettingsURL = data.externalLinks.mySettings;
+    window.RDL.Paths.signoutURL = data.externalLinks.signOut;
+    window.RDL.Paths.signInURL = replaceCultureForLiteFlow(data.externalLinks.signInUrl);
+    window.RDL.Paths.documentHomeUrl = data.externalLinks.documentHome;
+    window.RDL.Paths.downloadReviewUrl = data.externalLinks.downloadReviewUrl;
+    window.RDL.Paths.intakeFormUrl = data.externalLinks.intakeFormUrl;
+    window.RDL.Paths.resumReviewUrl = data.externalLinks.resumReviewUrl;
+    window.RDL.Paths.forgotURLLink = data.externalLinks.forgotURLLink;
+    RDL.PortalSettings.defaultPortalType = "3"
+    RDL.PortalSettings.ConfigurePortal = data.portalID
+    RDL.PortalSettings.ConfigurePortalCd = data.portalCD
+    RDL.PortalSettings.ConfigureProductId = data.productID
+    RDL.PortalSettings.ConfigureProductCd = data.productCD
+    RDL.useGoogleWidget = data.useGoogleWidget;
+    window.RDL.VisitorApiSetting.JSURL = RDL.useAssetsPath? RDL.replaceWithAssetsUrl(replaceCultureForLiteFlow(data.externalLinks.visitorAPIUrl)):replaceCultureForLiteFlow(data.externalLinks.visitorAPIUrl) ;
+    window.RDL.VisitorApiSetting.EnvMode = data.environment;
+    window.RDL.VisitorApiSetting.PRODUCT_CODE = data.productCD;
+    window.RDL.VisitorApiSetting.AccountCode = data.clientCD;
+    window.RDL.segmentKey = data.segmentKey;
+    window.segment.Writekey = data.segmentKey;
+    window.segment.DisableFullStory = data.disableFullStory;
+    window.RDL.googleClientID = data.googleLoginClientID;
+    window.RDL.facebookClientID = data.facebookAppId;
+    window.RDL.OnBoarding_Popup = data.variations.OnBoarding_Popup;
+    window.RDL.isTTCAddOrRemove = true;//data.variations.isTTCAddOrRemove;
+    window.RDL.Quality_Builder = data.variations.Quality_Builder;
+    window.RDL.enableNewRelic = data.enableNewRelic;
+    window.RDL.newRelicApplicationID = data.newRelicApplicationID;
+    window.RDL.customerServiceEmailId = data.customerServiceEmailId;
+    window.RDL.templateId = data.templateId ? data.templateId : "15";
+    window.RDL.steps = data.steps ? data.steps : undefined;
+    window.RDL.styleSheetName = data.styleSheetName ? data.styleSheetName : "RbtoHtml2";
+    window.RDL.styleSheetNameTxt = data.styleSheetNameTxt ? data.styleSheetNameTxt : "RBtoText";
+    window.RDL.styleSheetNameMultiColumn = data.styleSheetNameMultiColumn ? data.styleSheetNameMultiColumn : null;
+    window.RDL.skipSelectCV = window.RDL.PortalSettings.ConfigurePortalCd.toUpperCase() == "LSW" || window.RDL.PortalSettings.ConfigurePortalCd.toUpperCase() == "LDK" || window.RDL.PortalSettings.ConfigurePortalCd.toUpperCase() == "LIT" || window.RDL.PortalSettings.ConfigurePortalCd.toUpperCase() == "LBR" || window.RDL.PortalSettings.ConfigurePortalCd.toUpperCase() == "LDE" || window.RDL.PortalSettings.ConfigurePortalCd.toUpperCase() == "LNL" || window.RDL.PortalSettings.ConfigurePortalCd.toUpperCase() == "LPT";
+    RDL.Portal.activeExperiments = data.activeExperiments;
+    RDL.SkipLargeThumbnailScaling = false;
+    RDL.Experiments = data.experiments && Object.keys(data.experiments).length > 0 ? data.experiments : RDL.Experiments;
+    RDL.arrSkinOrder=data.skinOrder;
+    //  window.RDL.Quality_Builder = true;    
+    RDL.newRelicSamplingPercent = data.newRelicSamplingPercent || 100;      //Default set to 100%
+    window.RDL.disableAutoSuggestionOnStreet = data.variations.disableAutoSuggestionOnStreet;
+    if (data.enableNewRelic) {
+        if (!window.RDL.isINTL) {
+            addNewRelic(data.newRelicApplicationID);
+        } else {
+            addNewRelic(data.newRelicApplicationID, RDL.newRelicSamplingPercent);
+        }
+    }
+    segmentKey = data.segmentKey;
+    window.RDL.Localization = data.localization;
+    window.RDL.Definition_Tips = data.definition_tips;
+    window.RDL.Skins = data.skins;
+    window.RDL.NewSkinTemplates = data.newSkinTemplates;
+    // window.RDL.roundPhotoSkins = "MLJ2 MLJ5 MLK7 MLL1 MLL2 MLE7 MLE8";
+	// window.RDL.squarePhotoSkins = "MLK8 MLJ1 MLJ4 MLK5" ;
+    window.RDL.date = (new Date(2017, 10, 23));
+    window.RDL.randomPhotoNumber = Math.random();
+    window.RDL.DebounceTime = data.variations.DebounceTime;
+
+    configLoaded = true;
+    window.RDL.isImplementUserConsent = data.enableUserConsent;
+    window.RDL.isV2TestEnabled = data.variations.isV2TestEnabled;
+    RDL.cultureCD = getCultureCD(data.languageCulture);
+    RDL.languageCulture = data.languageCulture || "en-GB";
+    RDL.acceptLanguage = data.acceptLanguage || "en-US";
+    RDL.TTCCulture = data.TTCCulture ? data.TTCCulture : data.languageCulture;
+    RDL.accountsJSURL = RDL.useAssetsPath? RDL.replaceWithAssetsUrl(replaceCultureForLiteFlow(data.accountsJSURL)):replaceCultureForLiteFlow(data.accountsJSURL);
+    RDL.payPerFeatureJSURL = data.payPerFeatureJSURL;
+    RDL.googlePickerInfo = data.googleDrive;
+    window.RDL.dropBoxDrive = data.dropBoxDrive;
+    window.RDL.isDCTLEnabled = data.isDCTLEnabled ;
+    RDL.isNewTTCBaselined = data.isNewTTCBaselined || false;
+    RDL.onboardingSurveySegmentation = data.onboardingSurveySegmentation || false;
+    RDL.isShowLoginDisclaimer = false;
+    RDL.isfrmlpWelcomeBack = false;
+    RDL.showUserOptinsCheckBox = false;
+    RDL.showhideTipBtn = false;
+    RDL.showStreetAddrOptionalText = false;
+    RDL.showEditorSwitchVariant = true;
+    RDL.showFinalizeTemplateOpen = false;
+    RDL.noMixpanel = data.noMixpanel || false;
+    RDL.addColonSpace = data.addColonSpace || false;
+    RDL.excludeTemplateIndustryInfo = data.excludeTemplateIndustryInfo || [];
+    RDL.countrySpecificData = data.countrySpecificData || {};
+    RDL.removeSecondParaSkinsLst = data.removeSecondParaSkinsLst || [];
+    RDL.removeBulletsFromLastParaSkinsLst =  data.removeBulletsFromLastParaSkinsLst;
+    RDL.removeBulletFromSkillSkinsLst =  data.removeBulletFromSkillSkinsLst;
+    RDL.removeFirstBulletFromExperience =  data.removeFirstBulletFromExperience || [];
+    RDL.showGoogleLogin = true;
+    RDL.showFacebookLogin = true;
+    RDL.removeElementsFromTemplate = [".nonrnaphonefield"];
+    RDL.isSignatureMainSection = data.isSignatureMainSection || false ;
+    RDL.showXingLogin = data.showXingLogin || false ;
+    RDL.createGuestCounter = 0;
+    RDL.socialLinkOptions = data.socialLinkOptions || undefined;
+    RDL.defaultSocialLink = data.defaultSocialLink || "Twitter";
+    RDL.showSocialLinks = data.showSocialLinks || false;
+    RDL.blobRepoSitoryPath = data.blobRepoSitoryPath || undefined;
+    RDL.showLoginPopupOnCTAOnly = data.showLoginPopupOnCTAOnly || false;
+    RDL.nonTTCSections = data.nonTTCSections || undefined ; 
+    RDL.additionalSectionArray = data.additionalSectionArray || false;
+    RDL.employerEducationAutoComplete= data.employerEducationAutoComplete || false;
+    RDL.splitWHWithoutPreview = data.splitWHWithoutPreview || false;
+    RDL.chooseTemplateIntlSpecificFeatures = data.chooseTemplateIntlSpecificFeatures || false ;
+    RDL.enableTileInfographic = data.enableTileInfographic || false;
+    RDL.enableuserPhotoPlaceHolder = data.enableuserPhotoPlaceHolder || false;
+    RDL.enableGPAInEducation=data.enableGPAInEducation || false;
+    RDL.nativeLangPreference = data.nativeLangPreference || [];
+    window.RDL.Paths.FTGeneralNotificationUrl = data.externalLinks.FTGeneralNotificationUrl;
+    RDL.chooseTemplateDisableCategory = data.chooseTemplateDisableCategory || false;
+    RDL.customColorPickerOptions = data.customColorPickerOptions;
+    RDL.customColorPickerOptionsExp = data.customColorPickerOptionsExp;
+    RDL.downloadFunnelWidgetJSURL = data.downloadFunnelWidgetJSURL;
+    RDL.isDefaultSkipInPersonalization = data.isDefaultSkipInPersonalization || false ;
+    RDL.showSectionNameInTips = data.showSectionNameInTips == "false" ? false : true;
+    RDL.showPaperListInFormatting = data.showPaperListInFormatting == false ? false : true;
+    RDL.randomizedSkins = data.randomizedSkins || {};
+    RDL.localizeArrays = data.localizeArrays || [];  
+    RDL.localizationItems = data.localizationItems || [];     
+    RDL.disableGoogleDrive = data.disableGoogleDrive || false;
+    RDL.showSectionBreak = data.showSectionBreak || false;
+    RDL.colorPickerDefault = data.colorPickerDefault || ["#F6911E","#34393E"];
+    RDL.sendResumePageCountCall = data.sendResumePageCountCall;
+    RDL.showSurveyScreenOnEXPR = data.showSurveyScreenOnEXPR;
+    RDL.url_section_slug = data.url_section_slug;
+    RDL.url_final_resume = data.url_final_resume;    
+    RDL.usev9VisitorJSURL = data.usev9VisitorJSURL;
+    RDL.showPrintPreview = data.showPrintPreview;
+    if(RDL.usev9VisitorJSURL){
+        window.RDL.VisitorApiSetting.JSURL = window.RDL.VisitorApiSetting.JSURL.replace(7,9);
+    }
+    if(RDL.isINTL){
+        RDL.resetValuesOnChangeShape = true;
+        RDL.useDefaultPageSizeA4 = true;
+        RDL.useEnhancedTtcProps = true;       
+        RDL.EULocalization = 0 ;
+        RDL.enableSkipTemplateTagging = true;
+        RDL.isFullWidthAddExprEduBtn =  data.isFullWidthAddExprEduBtn || false;
+        RDL.rnWinsExp = data.rnWinsExp || false ;
+        RDL.showhideTipBtn = data.showhideTipBtn == "false" ? false : true;
+        RDL.isShowLoginDisclaimer = true;
+        RDL.changeBtnPosition = true;
+        RDL.removeElementsFromTemplate = [".rnaphonefield"];
+        RDL.isCityStateUIImp = data.isCityStateUIImp || false;
+        RDL.enablePhotoUploadZoomOut = true;
+        RDL.showSvgOnTemplates = data.showSvgOnTemplates? true : false;         
+        if(RDL.Portal.isOmnibusBaselined){
+            RDL.showhideTipBtn = false;
+            RDL.showStreetAddrOptionalText = data.showStreetAddrOptionalText == "false" ? false :true;
+            RDL.showFinalizeTemplateOpen = true;
+        }
+        if(RDL.GetQueryString('prefetchsampleimage') == "1"){
+            RDL.prefecthImg(RDL.Paths.ImageResourcePath.replace("blobcontent","blobimages") + RDL.builderImagePath + "userPlaceholderPhoto.jpg");
+        }
+        RDL.keepExistingHomePhone = true ;
+        RDL.showUnlocalizedMixpanelSectionNames = true; 
+        RDL.newdummyLanguageJson=null;
+        RDL.keepExistingStreetAddress = true ;
+        RDL.tipsBotVersion = data.tipsBotVersion || undefined;  
+        RDL.skinsCategoryExp = data.skinsCategoryExp;  
+        RDL.skinsExp = data.skinsExp; 
+        RDL.adjustContentInTemplate = data.adjustContentInTemplate || [];  
+        RDL.updatesknPreviewArray=data.updatesknPreviewArray || null;
+        RDL.enableLanguageSection = data.enableLanguageSection || false ;
+        RDL.showSkipSummaryButton = data.showSkipSummaryButton ;
+        RDL.renderOptimizedTemplate = data.renderOptimizedTemplate ;
+        RDL.showGDPRBtnImg = data.showGDPRBtnImg || false;
+        RDL.keepAdditionalDependencies = true;        
+        RDL.Definition_Tips = data.Definition_Tips;
+        RDL.finalFormatslider = data.finalFormatslider || {};  
+        RDL.custom_section = data.custom_section;
+        RDL.popupvalidCheck = data.popupvalidCheck;
+        RDL.popupresumPrev = data.popupresumPrev;
+        RDL.dummyResumeText = data.dummyResumeText;
+        RDL.templatePersonalization = data.templatePersonalization;
+        RDL.templatePersonalizationForAll = data.templatePersonalizationForAll;
+        RDL.templatePersonalizationExp = data.templatePersonalizationExp;
+        RDL.templatePersonalizationExp2 = data.templatePersonalizationExp2;
+        RDL.templatePersonalizationExp3 = data.templatePersonalizationExp3;
+        RDL.questionList = data.questionList;
+        RDL.questionListEXP = data.questionListEXP;
+        RDL.q4OptionsExp = data.q4OptionsExp;
+        RDL.degreeRWZ = data.degreeRWZ;     
+        RDL.localizationItems = data.localizationItems || [];    
+        RDL.shortMonth = data.shortMonth;
+        RDL.isJoshuaExpObject = data.isJoshuaExpObject;
+        RDL.addSectionControls = data.addSectionControls;
+        RDL.mainSectionControls = data.mainSectionControls;
+        RDL.extrafieldOnMain = data.extrafieldOnMain;
+        RDL.enableLocalizationWithRecursion = true;
+        RDL.finalFormatsliderExp = data.finalFormatsliderExp || {};
+        RDL.enablePPDTSection = data.enablePPDTSection || false;
+        RDL.ppdtTexts = data.ppdtTexts || [];
+        RDL.randomizeSkinList = data.randomizeSkinList || [];
+        RDL.randomSkinsTemplates = data.randomSkinsTemplates;             
+        RDL.jtADAChangesFlag = data.jtADAChangesFlag || false;    
+        RDL.additionalFutureYearInGraduationYear=data.additionalFutureYearInGraduationYear || false;
+        if(data.portalProperties){
+            Object.keys(data.portalProperties).forEach(function (key, index) {
+                RDL[key] = data.portalProperties[key];                
+            })
+        }
+    } else {
+        for(var i = 0; i < RDL.localizationItems.length; i++){
+            RDL[RDL.localizationItems[i]] = data[RDL.localizationItems[i]];
+        }
+        RDL.enableLocalizationWithRecursion = true;
+    }
+    if(RDL.joshuaTreeINTL){
+        document.body.classList.add('JT-feature-exp');
+    }
+    if(RDL.arrSkinOrder){
+        window.RDL.Skins = window.RDL.Skins ? window.RDL.Skins.sort(function(a, b) {
+            return RDL.arrSkinOrder.indexOf(a.id) - RDL.arrSkinOrder.indexOf(b.id)
+        }) : window.RDL.Skins;
+    }
+    RDL.disableColorPicker = data.disableColorPickerInJoshua ;
+    RDL.additionalSectionArrayExp = data.additionalSectionArrayExp;
+    RDL.defaultStudentQuestiononQ2= data.defaultStudentQuestiononQ2 || false;
+    RDL.enableLanguageSectionInJoshua = data.enableLanguageSectionInJoshua || false;
+    RDL.colorPickerRedesign = data.colorPickerRedesign || false;
+    RDL.hidePreviewOptionInJSTree = data.hidePreviewOptionInJSTree || false;
+    RDL.moveContenttoRightInSkins = data.moveContenttoRightInSkins || false;
+    RDL.removeSurveyFromSteps = data.removeSurveyFromSteps || false;
+    RDL.skinsCategory = data.skinsCategory;
+    RDL.captchaSiteKey = data.captchaSiteKey;
+    RDL.captchaLocale = data.captchaLocale;
+    RDL.qualtricsSurveyLink = data.qualtricsSurveyLink;
+    RDL.headshotImageURL = data.headshotImageURL;
+    RDL.headshotFemaleImage = data.headshotFemaleImage;
+    RDL.enableTtcPlacement = data.enableTtcPlacement;
+    RDL.countriesForMalePic = ["CL","AE","ES"];
+    RDL.showGeneralSkills = data.showGeneralSkills;    
+    RDL.skinsCategoryExp = data.skinsCategoryExp;
+    RDL.skinsCategoryExp2 = data.skinsCategoryExp2;
+    RDL.newSkins = data.newSkins || [];  
+    RDL.spellCheckImprovemnts = data.spellCheckImprovemnts || false ;
+    RDL.enableTemplateShuffle = data.enableTemplateShuffle || false;
+    window.RDL.skinsExp = data.skinsExp || []; 
+    RDL.trackExpLevel = data.trackExpLevel || false ;
+    RDL.mxAutoCompleteES = data.mxAutoCompleteES || false;
+    RDL.showTextDegreeWithAutosuggest = data.showTextDegreeWithAutosuggest || false;
+    RDL.reOrderCityZipStateADDR = data.reOrderCityZipStateADDR || false;
+    RDL.changeResumeFontColor = data.changeResumeFontColor || false;
+    RDL.intlSpecificDummyDocumentChange = RDL.isINTL || false;
+    RDL.oldSkins = data.oldSkins || [];
+    RDL.splitFooterLayout =  data.splitFooterLayout || RDL.splitFooterLayout;
+    RDL.useLanguageTool = !RDL.isINTL && (window.location.host.split('.')[0] == "qa" || window.location.host.split('.')[0] =="local") ? true : undefined;
+    RDL.useLanguageRBRWZ = data.useLanguageRBRWZ || false;
+    RDL.disableContactState = data.disableContactState;
+    RDL.lngFreeFormEmptyPopup = data.lngFreeFormEmptyPopup || false;
+    RDL.enableFootSection = data.enableFootSection || false;
+    RDL.useLanguagePreview = data.useLanguagePreview || false;
+    RDL.clearDefaultOnPreview = data.clearDefaultOnPreview || false; 
+    RDL.showlanguagesDefault =  data.showlanguagesDefault || false;   
+    RDL.showState  = data.showState || false;
+    RDL.removeExtraBulletFromSkillSkinsLst = data.removeExtraBulletFromSkillSkinsLst || false;
+    RDL.showMonthYearSplitRowUsingSelect = data.showMonthYearSplitRowUsingSelect || false;
+    RDL.snapshotDate = data.snapshotDate;
+    RDL.signFTXTdatePlaceFormat = data.signFTXTdatePlaceFormat;
+    RDL.docDataInfoDateFormat = RDL.isLiteBuilder ? "yyyy" :  data.docDataInfoDateFormat || "";
+    RDL.signDateFormat = data.signDateFormat || "";
+    RDL.readOnlyStartEndDate = data.readOnlyStartEndDate || false;
+    RDL.disableSegmentLoading = data.disableSegmentLoading || false;
+    RDL.gdprSwitchUserConsent = data.gdprSwitchUserConsent || false;
+    RDL.enableLogging = data.enableLogging || false;
+    RDL.enableDomainPhotoUrl = data.enableDomainPhotoUrl || false;
+    RDL.stopReorderSkinOnFinalize = data.stopReorderSkinOnFinalize || false;
+    RDL.isLangMainSummAdditionalSection = data.isLangMainSummAdditionalSection || false;
+    RDL.forgotPasswordWithoutRedirection = data.forgotPasswordWithoutRedirection || false;
+    RDL.fontFamilies = data.fontFamilies || [];
+    RDL.showDefaultBulletOnEditor = true //data.showDefaultBulletOnEditor || false;
+    RDL.recommendedTemplatesForStudentY=data.recommendedTemplatesForStudentY || [];
+    window.RDL.Paths.cvWritingUnauthLink = data.externalLinks.cvWritingUnauthLink;
+    window.RDL.Paths.cvWritingAuthLink = data.externalLinks.cvWritingAuthLink;
+    RDL.experienceDateSelectDropdowns = data.experienceDateSelectDropdowns || false;
+    RDL.enableCvParsing= data.enableCvParsing || false;
+    RDL.showBirthAsFieldInput = data.showBirthAsFieldInput || false;
+    RDL.isFinalizeReorder = data.isFinalizeReorder || false;
+    RDL.placeHolderContentAndLabel=data.placeHolderContentAndLabel || [];
+    RDL.onBoardActiveKeys=data.onBoardActiveKeys || false;
+    RDL.visitedSectionIndexOnBoarding=data.visitedSectionIndexOnBoarding || false;
+    RDL.visitedSectionIndex=data.visitedSectionIndex || false;
+    RDL.visitedSectionIndexAddSectionTips=data.visitedSectionIndexAddSectionTips || false;
+    RDL.sectionBreakMapping=data.sectionBreakMapping || false;
+    if(RDL.isLiteBuilder){
+        RDL.useLanguageRBRWZ = true;
+        RDL.enableTileInfographic = true;
+        RDL.sectionBreakPage = true;
+        RDL.unlocalizedTagging = true;
+        RDL.additionalSectionArray = data.additionalSectionArrayLite || RDL.additionalSectionArray; 
+        RDL.addittionalSectionBreak = true;
+        RDL.showTipsOnTTC = RDL.showTTcExamples ? RDL.showTipsOnTTC : true;
+        RDL.showState=true;
+        RDL.enableAdditionalDetailsOnContact=true;
+        RDL.showMonthYearSplitRowUsingSelect=true;
+        RDL.addittionalSectionNavBar = true;
+        RDL.hideTipsButton=true;
+        RDL.loginTextChangeFromFinalize = true;
+        RDL.trimEmailAddress = true;
+        RDL.showBirthAsFieldInput = true;
+        RDL.showStreetAddrOptionalText= false;
+        RDL.supportADDRForOldUsers = true;
+        if(RDL.enableGPAInEducation){
+
+            RDL.useEducationGPA=true;
+        }
+    }
+    if(data.DisableGAIntegration){
+        if(RDL.Portal.commonSegment){
+            window.segment.Integrations = {
+                "Google Analytics": false
+            }
+            window.SEGMENT_EVENTS_TO_ALL = true;
+        }
+        else{
+            RDL.integrations ={
+                "Google Analytics": false
+            };
+        }
+    } else if(RDL.Portal.commonSegment){    
+        window.SEGMENT_EVENTS_TO_ALL = true;
+    }
+    RDL.addDocIDOnFinalize = data.addDocIDOnFinalize;
+    resolve("");    
+}
+
+RDL.getPortalFeatures = function() {
+    if (RDL.recommendationJson) {
+        RDL.recommendationFeatureCode = JSON.parse(RDL.recommendationJson);
+    } else {
+        var url = RDL.Paths.BaseApiUrl + 'recommendation/portalfeatures';
+        var postObj = {
+            filters: {
+                portalcd: RDL.Portal.portalCd == 'cln' ? 'RNA' : RDL.Portal.portalCd.toUpperCase(), 
+                productcd: RDL.Portal.productCd.toUpperCase(),
+                countrycd : RDL.countryDetails.countryCD
+            }
+        }
+        return new Promise(function(resolve,reject) {
+            RDL.callAjax(url, "POST", true, true, function (data) {  
+                if(data){
+                    RDL.recommendationFeatureCode = JSON.parse(data);
+                }  
+                resolve(data);
+            }, resolve, postObj, null, true);
+        });
+    }
+}
+
+var getFeaturesPromise = new Promise(function (resolve, reject) {
+    if(!RDL.recPortalFeature && RDL.Portal.getFeatureCodes && RDL.FeatureCodesJson){
+        RDL.featureCodes = JSON.parse(RDL.FeatureCodesJson)
+            .filter(function (x) {
+                return x.isActive == true;
+            }).map(function (item) {
+                return item.featureCD;
+            });
+            resolve();
+    }
+    else{
+        if(!RDL.recPortalFeature) {
+            RDL.callAjax(window.RDL.Paths.BaseApiUrl + 'config/features/' + RDL.Portal.portalCd.toUpperCase() + '?includeInActiveFeatures=true', "GET", true, true, function (data) {
+                if (data && data != "null" && data != "") {
+                    RDL.featureCodes = JSON.parse(data)
+                        .filter(function (x) {
+                            return x.isActive == true;
+                        }).map(function (item) {
+                            return item.featureCD;
+                        });
+                }
+                resolve();
+            }, null, null, null, true);
+        } else {
+            RDL.getPortalFeatures()
+            .then(function() {
+                resolve();
+            });
+        }
+    }
+}).catch(function (err) {
+    return err;
+});
+
+function getFrontEndExpVariant(expId){
+    var frondEndExpList = localStorage.getItem('uiexp_conducted_experiments');
+    if(frondEndExpList){
+        frondEndExpList = JSON.parse(frondEndExpList);
+        if(frondEndExpList[expId]){
+            return frondEndExpList[expId].variant;
+        }
+    }
+}
+
+RDL.assignFrontendExperimentVariant = function() {   
+    
+}
+
+RDL.isHowItWorks = function (){
+    console.log("isHowItWorks")
+    if(!RDL.uploadFromLP){
+        RDL.uploadFromLP = getFrontEndExpVariant(RDL.Experiments.uploadFromLP);
+    }
+    RDL.assignFrontendExperimentVariant();
+    
+  if(!RDL.isINTL && !RDL.countryDetails.countryCode){
+    var cookieData = RDL.readCookie('x-georegion');
+    if(cookieData){
+        var cookieValues = cookieData.split(',');
+        if(cookieValues[1] && ["us","in","pk"].indexOf(cookieValues[1].toLowerCase()) == -1){
+            RDL.templateRecommendWidgetROW = true
+}
+}
+}
+
+    var docIdCookie = window.RDL.readCookie("DocumentID");
+    return (RDL.isBaseRoute && !docIdCookie
+        && RDL.GetQueryString('createnew') != 1
+        && RDL.GetQueryString('welcomeback') != 1
+        && RDL.GetQueryString('autorc') != 1
+        && RDL.GetQueryString('skincd') == null
+        && RDL.GetQueryString('docid') == null
+        && RDL.GetQueryString('fromambdemail') == null
+        && RDL.GetQueryString('ct') != 1
+        && RDL.GetQueryString('yoe') != 1
+        && RDL.GetQueryString('frmlpwelcomeback')!=1
+        && RDL.GetQueryString('theme') == null)
+        && (RDL.GetQueryString('skiphiw') != 'true')
+        && (window.RDL.GetQueryString('page') != 'login')
+        && (RDL.uploadFromLP != 3 && RDL.uploadFromLP != 4)     
+        && !RDL.templateRecommendWidgetROW
+}
+
+RDL.updateElligibleLanguagesLabel =function(elligibleLanguages, localization){
+    elligibleLanguages.map(function (lang) {
+        lang.lblName = localization["lkl_elligibleLanguages_" + lang.key];
+    })
+    return elligibleLanguages;
+}
+
+RDL.handleClaims = function (result, resolve) {
+    var data = JSON.parse(result);
+    RDL.UserClaims = data;
+    if(RDL.UserClaims){
+        RDL.UserClaims.email = RDL.UserClaims.email||RDL.UserClaims.user_name;
+        window.segment.CommonProps['Login Status'] = RDL.UserClaims.role == "Guest" ? 'FALSE' : 'TRUE';
+    }
+    if(RDL.UserClaims.user_uid){             
+        var googleOneTapCookie = RDL.getExperimentVariantFromCookie(RDL.Experiments.GoogleOneTapv3);
+        if(googleOneTapCookie){
+            RDL.GoogleOneTapv3 = googleOneTapCookie;
+        }     
+        RDL.handleTOULinksFlow(false,true);
+    }
+    if (resolve)
+        resolve("");
+}
+
+RDL.handleTOULinksFlow = function(checkCondition,hidePrivacyDOM,saveUserAgreement){  
+    
+    var showTOULinks = !(localStorage.getItem('toupv') == 1 || RDL.UserClaims.role.toLowerCase() == "user" 
+                        || RDL.UserClaims.email);
+    var hideDOM =  false;
+    if(checkCondition){
+        return showTOULinks;
+    }
+    if(showTOULinks){
+        if(saveUserAgreement) {
+            hideDOM=true;
+            localStorage.setItem('toupv',1);        
+            var postObj = [{"agreementCD": "TMOUSR","isAgreed": true},{"agreementCD": "PRYPCY","isAgreed": true}];        
+            saveUserAgreement(window.RDL.UserClaims.user_uid,RDL.PortalSettings.ConfigurePortalCd,postObj);
+        }
+    } 
+    if((!showTOULinks && hidePrivacyDOM||hideDOM)){
+        var toupvDOM = document.getElementById('toupv');            
+        if (toupvDOM) {
+            toupvDOM.classList.add('d-none');
+        }      
+    }    
+ }
+
+RDL.Claims = function (isAsync, resolve, acctsclaims,isCalledfromRegisterGuest) {
+    if (acctsclaims && acctsclaims.user_uid != undefined) {        
+        if(RDL.usev9VisitorJSURL && !isCalledfromRegisterGuest){
+        funcPointer = setInterval(RDL.callTrackingApi, 10);
+            (function (d, s, id) {
+                var js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) return;
+                js = d.createElement(s); js.id = id;
+                js.src = window.RDL.VisitorApiSetting.JSURL;
+                fjs.parentNode.insertBefore(js, fjs);
+            }(document, 'script', 'visitor-jssdk'));
+        }
+        RDL.handleClaims(JSON.stringify(acctsclaims), resolve);        
+    }
+    else {
+        var accountTimer = setInterval(function () {
+            if ((typeof BOLD != 'undefined' && typeof BOLD.Accounts != 'undefined') || (typeof window.LOGIN != 'undefined' && typeof window.LOGIN.Accounts != 'undefined')) {
+                var LOGIN = window.LOGIN || window.BOLD;
+                clearInterval(accountTimer);
+                if(RDL.Portal.reduceHIWtime){
+                    if(RDL.readCookie("UserStatus")){
+                        LOGIN.Accounts.getClaims().then(function (data) {      
+                            if (data.claims.user_uid != undefined) { 
+                                RDL.handleClaims(JSON.stringify(data.claims), resolve) 
+                            }
+                            else {
+                                var claims = "{\"user_uid\":null}";
+                                RDL.handleClaims(claims);
+                                RDL.handleGuestUserScenario();
+                                resolve();
+                            }
+                        });
+                    }
+                    else{
+                        var claims = "{\"user_uid\":null}";
+                        RDL.handleClaims(claims);
+                        RDL.handleGuestUserScenario();
+                        resolve();
+                    }
+                }
+                else{
+                        //Passing parameters for fixing slow build time
+                LOGIN.Accounts.getClaims().then(function (data) {
+                    // if (RDL.isLiteBuilder && data.claims && data.claims.portal_cd && RDL.Portal && RDL.Portal.portalCd && data.claims.portal_cd.toLowerCase() != RDL.Portal.portalCd.toLowerCase()) {
+                    //     LOGIN.Accounts.logOut().then(function (data) {
+                    //         window.open(window.location.href, "_self");
+                    //     });
+                    // }          
+                    if (data.claims.user_uid != undefined) { RDL.handleClaims(JSON.stringify(data.claims), resolve) }
+                    else {
+                        var claims = "{\"user_uid\":null}";
+                        RDL.handleClaims(claims, resolve);
+                        RDL.usev9VisitorJSURL && RDL.handleGuestUserScenario();
+                    }
+                });
+            }
+                
+            }
+        }, 50);
+    }
+}
+
+RDL.getCountryClaims = function () {
+    return new Promise(function(resolve,reject){        
+            RDL.callAjax(window.RDL.Paths.BaseApiUrl + 'user/countryclaims', "GET", true, true, function (data) {  
+            if(data){
+                data= JSON.parse(data);
+            }          
+            resolve(data);
+        },null,null,null,true);
+    
+    }).then(function(resp){
+        return resp;
+    }).catch(function(err){
+        return null;
+    });
+}
+
+
+
+RDL.settRDLExperimentByQueryString = function (){
+    var skipHIW = sessionStorage.getItem('skiphiw');
+    if(RDL.GetQueryString('skiphiw') == "true" || skipHIW){
+        RDL.skipHIW = true;
+        sessionStorage.setItem('skiphiw',true);
+    }
+}
+RDL.settRDLExperimentByQueryString();
+
+RDL.getLocalizationPath = function () {
+    var path = '';
+    if (RDL.Portal.portalCd == "rna") {
+        if (RDL.isRWZFlow) {
+            path = 'localization/';
+        }
+        else {
+            path = 'rb/config/Resources/';
+        }
+    }
+    else if (RDL.Portal.portalCd == "cln") {
+        path = 'localization/'
+    }
+    else {
+        path = 'config/Resources/'
+    }
+
+    return path;
+}
+
+RDL.isPseudoLocaleFlow = function(){
+    if(RDL.GetQueryString('pseudolocal') == "1") {
+        RDL.createCookie("pseudolocal","1");
+        return true;
+    } else if(RDL.readCookie("pseudolocal") == "1") {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+RDL.isEnvFlow = function(){ 
+    if(RDL.GetQueryString('env')) {
+        RDL.createCookie("env",RDL.GetQueryString('env'));
+        return true;
+    } else if(RDL.readCookie("env")) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+RDL.getLocalizationUrl = function (isPseudoLocaleFlow,isEnvFlow) { 
+    var environment = window.location.host.split('.')[0];
+    var configName = !RDL.isINTL ?"qa" : "dev"; 
+    var baseUrl = window.RDL.Paths.ResourcePath + RDL.getConfigPath() + "Resources/";
+    // var isPseudoLocaleFlow = RDL.isPseudoLocaleFlow();
+    // var isEnvFlow = RDL.isEnvFlow();
+    if(RDL.Portal.useDiffResourcePath){
+        baseUrl = window.RDL.Paths.ResourcePath + RDL.getLocalizationPath();
+    }
+    environment = RDL.environmentURL ? RDL.environmentURL : environment;
+    switch (environment) {
+        case "reg":
+        case "regression":
+        case "pre-reg":
+        case "pen":            
+            configName = "reg";
+            break;
+        case "loc":
+            configName = "loc";
+            break;
+        case "stg":
+            configName = "stg";
+            break;
+        case "perf":
+            configName = "perf";
+            break;
+        case "www":
+            configName = "prod";
+            break;
+    }
+
+    var countryCD = "";
+    var filename = configName + countryCD + (!isPseudoLocaleFlow ? "/localization.json?v=" : "/pseudo_localization.json?v=") + versionNumber;
+    RDL.localelocalizationURL = baseUrl + configName + countryCD +  "/localization.json?v=" + versionNumber;
+    if(RDL.Portal.uselocalizationDiffFolder && RDL.countryDetails && availableCountryCDs.indexOf(RDL.countryDetails.countryCode.toLowerCase())>-1){
+        filename = configName + '/' + RDL.countryDetails.countryCode.toLowerCase() + (!isPseudoLocaleFlow ? "/localization.json?v=" : "/pseudo_localization.json?v=") + versionNumber;
+        RDL.localelocalizationURL = baseUrl + configName + '/' + RDL.countryDetails.countryCode.toLowerCase() +  "/localization.json?v=" + versionNumber;
+    }
+    if(RDL.isLiteBuilder){
+        baseUrl = window.RDL.Paths.ResourcePath;
+        baseUrl = baseUrl.replace('/' + RDL.PortalSettings.ConfigurePortalCd.toLowerCase() + '/','/lclite/resources/');
+        if(!RDL.liteFlowCultureCD){
+            filename = configName + (!isPseudoLocaleFlow ? "/localization_en.json?v=" : "/pseudo_localization_en.json?v=") + versionNumber;
+        } else{
+            filename = configName + (!isPseudoLocaleFlow ? '/localization_' : "/pseudo_localization_") + RDL.liteFlowCultureCD + '.json?v=' + versionNumber;
+        }
+        
+    }
+    if(RDL.enablelanguageChangeDropDown){
+       if( RDL.liteFlowCultureCD == "en-DE" || RDL.liteFlowCultureCD == "en-PL")
+            filename = configName + (!isPseudoLocaleFlow ? '/localization_' : "/pseudo_localization_") + RDL.liteFlowCultureCD + '.json?v=' + versionNumber;
+       else
+            filename = configName + countryCD + (!isPseudoLocaleFlow ? "/localization.json?v=" : "/pseudo_localization.json?v=") + versionNumber; 
+    }
+    //RDL.localelocalizationURL = baseUrl + filename;
+    if(isEnvFlow){        
+        baseUrl = window.RDL.Paths.ResourcePath+"locales/";
+        if(RDL.readCookie("env").toLowerCase()=="loc"){                    
+            filename = "localization.json?v="+ versionNumber;;
+        }
+        else{
+            filename = "rb_"+ RDL.readCookie("env").toLowerCase()+".json?v="+ versionNumber;
+        }
+    }   
+    return baseUrl + filename;
+}
+
+RDL.getLongMonths = function (culture) {
+    var monthsLong = [""];
+    for (i = 0; i < 12; i++) {
+        var objDate = new Date(); objDate.setFullYear(objDate.getFullYear(), i, 1); //setting to first day of the month
+        var locale = culture.toLowerCase(), month = objDate.toLocaleString(locale, { month: "long" });
+        if(RDL.isLowerCaseLongMonths)
+        {
+            monthsLong.push(month.toLowerCase());
+        }
+        else
+            monthsLong.push(month.substr(0, 1).toUpperCase() + month.substr(1, month.length - 1));
+    }
+    return monthsLong;
+}
+
+RDL.initializeRendererLocalization = function (){
+    RDL.localizationResumeRenderer = {
+        "NPREDefaultText" : "Hi, I&#8217;m",
+        "firstNamDefaultText": window.RDL.Localization.fName,
+        "lastNameDefaultText": window.RDL.Localization.lName,
+        "streetAddressDefaultText": window.RDL.Localization.streetAddress,
+        "cityDefaultText": window.RDL.Localization.city,
+        "stateDefaultText": window.RDL.Localization.state,
+        "zipDefaultText": window.RDL.Localization.zip,
+        "emailDefaultText": window.RDL.Localization.email,
+        "phoneDefaultText": RDL.isLiteBuilder ? window.RDL.Localization.phone :(window.RDL.keepExistingHomePhone? '': window.RDL.Localization.phone),
+        "professionDefaultText": window.RDL.Localization.professionDefaultText,
+        "cellPhoneDefaultText": window.RDL.keepExistingHomePhone ? window.RDL.Localization.phone : window.RDL.Localization.cPhone,
+        "skillDef": window.RDL.Localization.skllDefault,
+        "resumeTitleDefaultText": window.RDL.Localization.rsTitlDef,
+        "exRsmTitleDef": window.RDL.Localization.exRsTitlDef,
+        "exRsmTitleDef2": window.RDL.Localization.exRsTitl2Def,
+        "exRsmTitleDef3": window.RDL.Localization.exRsTitl3Def,
+        "editSectionText": window.RDL.Localization.editSection,
+        "dragText": window.RDL.Localization.drag,
+        "deleteText": window.RDL.Localization.delete,
+        "editText": window.RDL.Localization.edit,
+        "addSubSectionText": window.RDL.Localization.addSubSection,
+        "addNewSecDocText": window.RDL.Localization.addNewSecDoc,
+        "finalRename": window.RDL.Localization.finalRename,
+        "finalRenameErr": window.RDL.Localization.finalRenameErr,
+        "finalRenameCancel": window.RDL.Localization.btnCancel,
+        "suppInfoDefaultText": window.RDL.Localization.suppInfo,
+        "editPhoto_Text": window.RDL.Localization.editPhoto_Text,
+        "shortMonths": window.RDL.Localization.shortMonth,
+        "shortMonthsEnd": (RDL.makeEndMonSmallForIntervals && window.RDL.Localization.shortMonthEnd)? window.RDL.Localization.shortMonthEnd :'',
+        "longMonths": RDL.getLongMonths(RDL.cultureCD),
+        "longMonthsEnd":(RDL.makeEndMonSmallForIntervals && window.RDL.Localization.longMonthEnd)? window.RDL.Localization.longMonthEnd:'',
+        "currentText": window.RDL.Localization.current_Text,
+        "toDate_text": window.RDL.Localization.toDate_text || '',
+        "address_Label": RDL.Localization.address_Label || '',
+        "email_Label": RDL.Localization.email_Label || '',
+        "phone_Label": RDL.Localization.phone_Label || '',
+        "countryDefaultText" : RDL.Localization.country_Label || '',
+        "socialLinkDefaultText" : RDL.Localization.socialLinkDefaultText || '',
+        "mobile_Label": RDL.Localization.mobile_Label || '',
+        "curriculum_Vitae_Text":RDL.Localization.curriculum_Vitae_Text || '',
+        "gpa_text":RDL.Localization.GPA_text || '',
+        "nationality_Text":RDL.Localization.nationality_Text||'',
+        "maritalStatus_Text":(RDL.Localization.maritalStatus_Template_Text?RDL.Localization.maritalStatus_Template_Text:RDL.Localization.maritalStatus_Text)||'',
+        "DOB_Text":RDL.Localization.DOB_Text ,
+        "driveLabel_Text":RDL.Localization.driveLabel_Text,
+        "availability_Text":RDL.Localization.availability_Text,
+        "dob_in_Text": RDL.Localization.dob_in_Text,
+        "WebsiteText": RDL.Localization.WebsiteTextNewLabel || RDL.Localization.WebsiteText,
+        "linkedInText":  RDL.Localization.linkedInText || RDL.Localization.LinkedInText,
+        "xingText": RDL.Localization.xingText,
+        "blogText": RDL.Localization.BlogText
+    }
+}
+
+RDL.handleLocalizationText = function (result, resolve) {
+    var data = JSON.parse(result);
+    if(!data.localizedtext)
+    {
+        data=JSON.parse(data);
+    }
+    window.RDL.Localization = data.localizedtext;
+    if(RDL.joshuaTreeINTL){
+        RDL.Localization.selResumeCreateNew = RDL.Localization.selResumeCreateNewJT || RDL.Localization.selResumeCreateNew;
+        RDL.Localization.selResumeAlready = RDL.Localization.selResumeAlreadyJT || RDL.Localization.selResumeAlready;
+        RDL.Localization.gradYear = RDL.Localization.gradYearJT || RDL.Localization.gradYear;
+        RDL.Localization.finalResumeSec = RDL.Localization.finalResumeSecJT || RDL.Localization.finalResumeSec;
+        if(RDL.Localization.popupvalidCheck && RDL.Localization.popupvalidCheck.bodyJoshua){
+            RDL.Localization.popupvalidCheck.body = RDL.Localization.popupvalidCheck.bodyJoshua;
+    }
+    }
+   
+    if(data.definition_tips){
+    window.RDL.Definition_Tips = data.definition_tips;
+    }    
+    
+    window.RDL.localizedDocumentText = data.localizedtext.resumeNameLocalizedText ? data.localizedtext.resumeNameLocalizedText : "Resume";
+    RDL.processLocalization()
+    RDL.initializeRendererLocalization();
+    if (RDL.isLiteBuilder) {
+        RDL.getLocalizedURL();
+    }
+    RDL.enableExperimentContent && RDL.getExperimentObject();
+    if (resolve)
+        resolve("");
+}
+
+window.addEventListener("load", function () {
+    RDL.pageLoaded = true;
+    RDL.loadHIWSBuildertaticCSSResources(); 
+    if(!RDL.isINTL){
+        RDL.prefecthImg(RDL.Portal.blobRepoTest + 'sdul/1.png', 'Skin Border 1');
+        RDL.prefecthImg(RDL.Portal.blobRepoTest + 'sdul/2.png', 'Skin Border 2');
+        RDL.prefecthImg(RDL.Portal.blobRepoTest + 'sdul/3.png', 'Skin Border 3');
+        RDL.prefecthImg(RDL.Portal.blobRepoTest + 'sdul/4.png', 'Skin Border 4');
+        RDL.prefecthImg(RDL.Portal.blobRepoTest + 'sdul/5.png', 'Skin Border 5');
+        RDL.prefecthImg(RDL.Portal.blobRepoTest + 'sdul/6.png', 'Skin Border 6');
+        RDL.prefecthImg(RDL.Portal.blobRepoTest + 'sdul/7.png', 'Skin Border 7');
+        RDL.prefecthImg(RDL.Portal.blobRepoTest + 'sdul/8.png', 'Skin Border 8');
+    }
+});
+
+
+RDL.runTestCookie = RDL.readCookie("runtest");
+RDL.isBaseRoute = (location.pathname == RDL.Paths.BasePath || location.pathname == RDL.Paths.BasePath + '/');
+
+RDL.closeShortLoaderQualityBuilder = function () {
+    var loaderNode = document.getElementById("shortLoader");
+    var loaderApp = document.getElementById("app");
+
+    if (loaderNode && loaderApp) {
+        loaderNode.classList.add("d-none");
+        loaderApp.classList.remove("blur");
+    }
+}
+
+RDL.closeLongLoaderQualityBuilder = function () {
+
+    var selector="longLoader";
+    var loaderNode = document.getElementById(selector);
+    if (loaderNode) {
+        loaderNode.classList.add("d-none");
+        document.body.classList.remove("disable-scroll")
+    }
+}
+RDL.closeLongLoaderNewQualityBuilder =function(){
+    var selector="longLoaderNew";
+    var loaderNode = document.getElementById(selector);
+    if (loaderNode) {
+        loaderNode.classList.add("d-none");
+        document.body.classList.remove("disable-scroll")
+    }
+}
+
+RDL.closeAnimation = function () {
+    if(!RDL.disableHIW){
+        setTimeout(RDL.closeShortLoaderQualityBuilder, 100);
+        setTimeout(RDL.closeLongLoaderQualityBuilder, 100);
+        setTimeout(RDL.closeLongLoaderNewQualityBuilder, 100);
+    }
+}
+
+RDL.handleAliasAndIdentify = function () {
+    var ga_tempValue = window.RDL.readCookie('_mp_id');
+    var mpKeyValue;
+    if (ga_tempValue) {
+        mpKeyValue = JSON.parse(unescape(ga_tempValue)).mp_key
+    }
+    var interval = setInterval(function () {
+      if (typeof analytics != 'undefined' && typeof mixpanel != 'undefined') {
+            var conductedExperiments = null;
+            try{
+                conductedExperiments = localStorage.getItem('conducted_experiments');
+            }
+            catch(err){
+                conductedExperiments = null;
+            }
+            if(!RDL.isINTL && RDL.Portal.portalCd == "rna" && conductedExperiments){
+                conductedExperiments = JSON.parse(conductedExperiments);
+            }
+            clearInterval(interval);
+            if (mpKeyValue) {
+                RDL.UserClaims.role.toLowerCase() == "guest" && analytics.alias(mpKeyValue);
+                setTimeout(function () {
+                    RDL.UserClaims.role.toLowerCase() == "guest" && analytics.alias(RDL.UserClaims.user_uid, mpKeyValue);
+                    setTimeout(function () {
+                        if (RDL.isINTL)
+                            window.RDL.TrackEvents('identify', experimentTraits, RDL.UserClaims.user_uid, true);
+                        else
+                            analytics.identify(RDL.UserClaims.user_uid, experimentTraits);
+                    }, 1000);
+                }, 1000);
+            }
+            else {
+                //call mixpanel sync only once for MX-ES portal
+                RDL.UserClaims.role.toLowerCase() == "guest" && (RDL.Portal.portalCd == "les" || RDL.isLiteBuilder) && mixpanelSyncForMX();
+                RDL.UserClaims.role.toLowerCase() == "guest" && analytics.alias(RDL.UserClaims.user_uid);
+                setTimeout(function () {
+                    if (RDL.isINTL)
+                        window.RDL.TrackEvents('identify', experimentTraits, RDL.UserClaims.user_uid, true);
+                    else
+                        analytics.identify(RDL.UserClaims.user_uid, experimentTraits);
+                }, 1000);
+            }
+        }
+    }, 50);
+}
+
+RDL.excludeExperimentFromMixpanelCookie = function (mixpanelProperties) {
+    var properties = {};
+    var data = JSON.parse(mixpanelProperties);
+    Object.keys(data).forEach(function (key, index) {
+        if (key.indexOf('Experiment:') == -1) {
+            properties[key] = data[key];
+        }
+    });
+    return JSON.stringify(properties);
+}
+
+
+RDL.GetMixpanelProperties = function () {
+    var mixpanelProperties = '';
+    try {
+        if (typeof mixpanel != 'undefined' && typeof mixpanel.get_distinct_id != 'undefined') {
+            mixpanel.register({ 'device type': 'desktop' });
+            var infoProperties = mixpanel._.info.properties();
+            var persistProperties = mixpanel.persistence.properties();
+            var flowName = { "flow name": RDL.builderVersion };
+            mixpanelProperties = JSON.stringify(Object.assign(infoProperties, persistProperties, flowName));
+            mixpanelProperties = RDL.excludeExperimentFromMixpanelCookie(mixpanelProperties);
+            RDL.createCookie("mixpanelprops", escape(mixpanelProperties));
+        }
+    }
+    catch (e) {
+        console.log('error in mixpanel properties fetching');
+    }
+}
+
+RDL.UpdateMixPanelURL = function () {
+    try{
+    var mixpanelpropsVal = window.RDL.readCookie("mixpanelprops");
+    var mixPanelValObj = JSON.parse(unescape(mixpanelpropsVal));
+    if (mixPanelValObj["$current_url"] != window.location.href) {
+        mixPanelValObj["$current_url"] = window.location.href;
+        var flowName = { "flow name": RDL.builderVersion };
+        var mixpanelProperties = JSON.stringify(Object.assign(mixPanelValObj, flowName));
+        mixpanelProperties = RDL.excludeExperimentFromMixpanelCookie(mixpanelProperties);
+        window.RDL.createCookie("mixpanelprops", escape(mixpanelProperties));
+    }}
+    catch(err){
+        RDL.GetMixpanelProperties();
+    }
+}
+
+RDL.getOrUpdateMixPanelProps = function (){
+    if (RDL.readCookie("mixpanelprops") == null) {
+        RDL.GetMixpanelProperties();
+    }
+    else {
+        RDL.UpdateMixPanelURL();
+    }
+}
+
+RDL.trackEvent = function (eventName, eventpropval, userid, islogin,skipTraitsToIterable, contextProps) {
+    RDL.getOrUpdateMixPanelProps();
+    // if(eventName == 'identify' && RDL.isLiteBuilder){
+    //     contextProps = {"locale":RDL.getLocaleAlongWithCountry(RDL.portalCultureCD)};   
+    // }
+    TrackEvents(eventName, eventpropval, userid, islogin, skipTraitsToIterable, contextProps);
+}
+
+RDL.AsyncSegTrack = function (isLoggedin) {
+    if (RDL.isLoadJS && !RDL.noMixpanel) {
+        if (typeof analytics != 'undefined' && typeof mixpanel != 'undefined' && typeof mixpanel.get_distinct_id != 'undefined') {
+            RDL.getOrUpdateMixPanelProps();
+            if(RDL.Portal.commonSegment){
+                TrackPageEventsFinal();
+            }
+            else{
+                AsyncSegTrack(isLoggedin);
+            }
+        }
+        else {
+            var TrackEventsInterval = setInterval(function () {
+                if (typeof analytics != 'undefined' && typeof mixpanel != 'undefined' && typeof mixpanel.get_distinct_id != 'undefined') {
+                    RDL.getOrUpdateMixPanelProps();
+                    if(RDL.Portal.commonSegment){
+                        TrackPageEventsFinal();
+                    }
+                    else{
+                        AsyncSegTrack(isLoggedin);
+                    }
+                    clearInterval(TrackEventsInterval);
+                }
+            }, 100);
+        }
+    }
+}
+
+RDL.TrackEvents = function (eventName, eventpropval, userid, islogin, skipTraitsToIterable, contextProps) {
+    if(eventName == 'inline spell checker' && RDL.uploadExperiencePopup ==3 
+        && location.pathname.indexOf('expr') > -1){
+        if(eventpropval ){
+            eventpropval['upload user modal'] = RDL.showUploadExprPopup ? 'True' : 'False';
+        }
+    }
+    if(eventName == 'save resume modal' && RDL.optimizeTemplateSearcher > 2 
+        &&  sessionStorage.getItem('uploadSelected') == '1'){
+        if(eventpropval ){
+            eventpropval['Upload User Finalize Flow'] = "TRUE";
+        }
+    }
+    if (window.RDL.isLoadJS && !RDL.noMixpanel) {
+        if (RDL.UserClaims && RDL.UserClaims.user_uid && RDL.UserClaims.user_uid != emptyGuid) {
+            if (eventpropval != null)
+                eventpropval["userId"] = RDL.UserClaims.user_uid;
+            else
+                eventpropval = { 'userId': RDL.UserClaims.user_uid };
+        }
+        if(RDL.isLiteBuilder){
+            eventpropval['resume locale'] = RDL.cultureCD;
+        }
+        if (typeof analytics != 'undefined' && typeof mixpanel != 'undefined' && typeof mixpanel.get_distinct_id != 'undefined') {
+            RDL.trackEvent(eventName, eventpropval, userid, islogin, skipTraitsToIterable, contextProps);
+            if(eventName == 'identify'){
+                RDL.GetMixpanelProperties();
+            }
+        }
+        else {
+            var TrackEventsInterval = setInterval(function () {
+                if (typeof analytics != 'undefined' && typeof mixpanel != 'undefined' && typeof mixpanel.get_distinct_id != 'undefined') {
+                    RDL.trackEvent(eventName, eventpropval, userid, islogin, skipTraitsToIterable, contextProps);
+                    if(eventName == 'identify'){
+                        RDL.GetMixpanelProperties();
+                    }
+                    clearInterval(TrackEventsInterval);
+                }
+            }, 100);
+        }
+    }
+};
+
+RDL.getSkinHtmlPath = function () {
+    var skinPath = '/config/';
+    if (RDL.isLiteBuilder && RDL.liteFlowRootURLCultureSlug) {
+        skinPath = '/' + RDL.liteFlowRootURLCultureSlug + '/config/';
+    }
+
+    if (RDL.isINTL && RDL.Portal.rewriteBlobContent == false) {
+        skinPath = environment === "www" || environment === "stg" ? RDL.Portal.blobRepo : RDL.Portal.blobRepoTest;
+    }
+    else {
+        if (environment == 'local') {
+            skinPath = RDL.Portal.blobRepoTest;
+        }
+    }
+    return skinPath;
+}
+
+RDL.LocalizeFromEndDateToWordInSkin = function (htmlDoc) {
+    try{
+        if(RDL.localizationResumeRenderer.toDate_text){
+            htmlDoc.querySelectorAll("span[dependency='JSTD+EDDT'],span[dependency='GRST+GRED'],span[dependency='GRST+GRED|GRIP'],span[dependency='GRED|GRIP']").forEach(function(spanNode){
+                if(spanNode && spanNode.innerText && spanNode.innerText.trim() &&
+                    (spanNode.innerText.trim().toLowerCase() == "to" || 
+                        spanNode.innerText.trim().toLowerCase() == "a" || 
+                        spanNode.innerText.trim().toLowerCase() == "à")){
+                            spanNode.innerText = spanNode.innerText.replace(spanNode.innerText.trim(),RDL.localizationResumeRenderer.toDate_text);
+                        }
+                });
+        }
+       
+        htmlDoc.querySelectorAll(".xslt_static_change").forEach(function (spanNode) {
+            if (spanNode && spanNode.innerText && spanNode.innerText.trim()) {
+                if (RDL.localizationResumeRenderer.address_Label && spanNode.innerText.trim().toLowerCase() == "address") {
+                    spanNode.innerText = spanNode.innerText.replace(spanNode.innerText.trim(), RDL.localizationResumeRenderer.address_Label);
+                }
+                if (RDL.localizationResumeRenderer.phone_Label && spanNode.innerText.trim().toLowerCase() == "phone") {
+                    spanNode.innerText = spanNode.innerText.replace(spanNode.innerText.trim(), RDL.localizationResumeRenderer.phone_Label);
+                }
+                if (RDL.localizationResumeRenderer.mobile_Label && spanNode.innerText.trim().toLowerCase() == "mobile") {
+                    spanNode.innerText = spanNode.innerText.replace(spanNode.innerText.trim(), RDL.localizationResumeRenderer.mobile_Label);
+                }
+                if (RDL.localizationResumeRenderer.email_Label && spanNode.innerText.trim().toLowerCase() == "email") {
+                    spanNode.innerText = spanNode.innerText.replace(spanNode.innerText.trim(), RDL.localizationResumeRenderer.email_Label);
+                }
+                if (RDL.localizationResumeRenderer.curriculum_Vitae_Text && spanNode.innerText.trim().toLowerCase() == "curriculum vitae") {
+                    spanNode.innerText = spanNode.innerText.replace(spanNode.innerText.trim(), RDL.localizationResumeRenderer.curriculum_Vitae_Text);
+                }
+                if (RDL.localizationResumeRenderer.gpa_text && spanNode.innerText.trim().toLowerCase() == "gpa") {
+                    spanNode.innerText = spanNode.innerText.replace(spanNode.innerText.trim(), RDL.localizationResumeRenderer.gpa_text);
+                }
+
+                if (RDL.localizationResumeRenderer.DOB_Text && spanNode.innerText.trim().toLowerCase() == "date of birth") {
+                    spanNode.innerText = spanNode.innerText.replace(spanNode.innerText.trim(), RDL.localizationResumeRenderer.DOB_Text);
+                }
+
+                if (RDL.localizationResumeRenderer.driveLabel_Text && spanNode.innerText.trim().toLowerCase() == "permit") {
+                    spanNode.innerText = spanNode.innerText.replace(spanNode.innerText.trim(), RDL.localizationResumeRenderer.driveLabel_Text);
+                }
+
+                if (RDL.localizationResumeRenderer.maritalStatus_Text && spanNode.innerText.trim().toLowerCase() == "marital status") {
+                    spanNode.innerText = spanNode.innerText.replace(spanNode.innerText.trim(), RDL.localizationResumeRenderer.maritalStatus_Text);
+                }
+
+                if (RDL.localizationResumeRenderer.nationality_Text && spanNode.innerText.trim().toLowerCase() == "nationality") {
+                    spanNode.innerText = spanNode.innerText.replace(spanNode.innerText.trim(), RDL.localizationResumeRenderer.nationality_Text);
+                }
+
+                if (RDL.localizationResumeRenderer.availability_Text && (spanNode.innerText.trim().toLowerCase() == "availability" || spanNode.innerText.trim().toLowerCase() == "other")) {
+                    spanNode.innerText = spanNode.innerText.replace(spanNode.innerText.trim(), RDL.localizationResumeRenderer.availability_Text);
+                }
+
+                if (RDL.localizationResumeRenderer.dob_in_Text && spanNode.innerText.trim().toLowerCase() == "in") {
+                    spanNode.innerText = spanNode.innerText.replace(spanNode.innerText.trim(), RDL.localizationResumeRenderer.dob_in_Text);
+                }
+               
+            }
+        });
+
+        if(RDL.newFieldGroupSkins && !RDL.enableGroupFieldGrouping){
+            htmlDoc.querySelectorAll("#CATEGORY_IM_SOCL").forEach(function (spanNode){
+                spanNode.remove();
+            });
+        }
+        
+    } catch(error){
+        console.log(error);
+    }
+}
+
+RDL.loadPaywallScript = function(){
+    var script = document.createElement('script');
+    var domainURL = window.location.host;
+    if(domainURL.split('.')[0] === 'local')
+        return;
+    script.src = 'https://' + domainURL +'/payment/scripts/sellFeatureWidget.js';
+    document.head.appendChild(script);
+    script.onload = function() {
+        RDL.SellWidget = SellWidget; 
+      };
+    
+}
+RDL.addSkinClass = function (skinHtml,skinNameText) {
+    if(skinHtml){
+        if(skinNameText){
+            skinNameText = skinNameText.replace(".htm","").toLowerCase();
+        }
+        var skinDocNode = skinHtml.querySelector("#document") || skinHtml.querySelector(".document");
+        if(skinDocNode && !skinDocNode.classList.contains("skn-"+skinNameText)){
+            skinDocNode && skinDocNode.classList.add("skn-"+skinNameText);
+            var skinStaticStyle = skinHtml.querySelector("style#static");
+            if(skinStaticStyle && skinStaticStyle.innerHTML){
+                skinStaticStyle.innerHTML = skinStaticStyle.innerHTML.replace(new RegExp('#document', 'gi'),"#document.skn-"+skinNameText);
+            }
+            var skinDynamicStyle = skinHtml.querySelector("style#dynamic");
+            if(skinDynamicStyle && skinDynamicStyle.innerHTML){
+                skinDynamicStyle.innerHTML = skinDynamicStyle.innerHTML.replace(new RegExp('#document', 'gi'),"#document.skn-"+skinNameText);
+            }
+        }
+    }
+}
+
+RDL.getSkinHtml = function (skinName, isAsyncTrue) {
+    var url = RDL.getSkinHtmlPath() + skinName;
+    RDL.callAjax(url, 'GET', isAsyncTrue ? true : false, false, function (data) {
+        var parser = new DOMParser();
+        var htmlDoc = parser.parseFromString(data, "text/html");
+        //EB-11749 :These multiple text comparisions are part of a temporary change.
+        //Once the changes are done at skin level, this will be removed.
+        //This replaces the word 'to' between from and to dates with its localized text
+        RDL.isINTL && RDL.LocalizeFromEndDateToWordInSkin(htmlDoc);
+        (RDL.Portal.portalCd == "lde")  && RDL.addSkinClass(htmlDoc,skinName);
+        RDL.files[skinName] = htmlDoc;
+    },null,null,!RDL.isINTL);
+}
+
+RDL.handleSkins = function () {
+    RDL.Skins.filter(function (skin) {
+        return skin.skinCD !== RDL.selectedSkin;
+    }).forEach(function (skin) {
+        var skinName = skin.skinCD + '.htm';
+        RDL.getSkinHtml(skinName, true);
+    });
+}
+
+RDL.loadFile = function () {
+    if (RDL.Skins.filter) {
+        RDL.handleSkins();
+    }
+    else {
+        var skinTimer = setInterval(function () {
+            if (RDL.Skins.filter) {
+                clearInterval(skinTimer);
+                RDL.handleSkins();
+            }
+        }, 100);
+    }
+}
+
+RDL.loadJsWithKey = function (src, id, key) {
+    var f = document.createElement('script');
+    f.setAttribute("src", src);
+    f.setAttribute("id", id);
+    f.setAttribute("data-app-key", key);
+    if (typeof f != "undefined")
+        document.getElementsByTagName("head")[0].appendChild(f);
+}
+
+RDL.polyfillArrayFrom = function () {
+    if(isIE){
+    Array.from = (function () {
+        var toStr = Object.prototype.toString;
+        var isCallable = function (fn) {
+            return typeof fn === 'function' || toStr.call(fn) === '[object Function]';
+        };
+        var toInteger = function (value) {
+            var number = Number(value);
+            if (isNaN(number)) { return 0; }
+            if (number === 0 || !isFinite(number)) { return number; }
+            return (number > 0 ? 1 : -1) * Math.floor(Math.abs(number));
+        };
+        var maxSafeInteger = Math.pow(2, 53) - 1;
+        var toLength = function (value) {
+            var len = toInteger(value);
+            return Math.min(Math.max(len, 0), maxSafeInteger);
+        };
+
+        // The length property of the from method is 1.
+        return function from(arrayLike/*, mapFn, thisArg */) {
+            // 1. Let C be the this value.
+            var C = this;
+
+            // 2. Let items be ToObject(arrayLike).
+            var items = Object(arrayLike);
+
+            // 3. ReturnIfAbrupt(items).
+            if (arrayLike == null) {
+                throw new TypeError('Array.from requires an array-like object - not null or undefined');
+            }
+
+            // 4. If mapfn is undefined, then Let mapping be false.
+            var mapFn = arguments.length > 1 ? arguments[1] : void undefined;
+            var T;
+            if (typeof mapFn !== 'undefined') {
+                // 5. else
+                // 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
+                if (!isCallable(mapFn)) {
+                    throw new TypeError('Array.from: when provided, the second argument must be a function');
+                }
+
+                // 5. b. If thisArg was supplied, Let T be thisArg; else Let T be undefined.
+                if (arguments.length > 2) {
+                    T = arguments[2];
+                }
+            }
+
+            // 10. Let lenValue be Get(items, "length").
+            // 11. Let len be ToLength(lenValue).
+            var len = toLength(items.length);
+
+            // 13. If IsConstructor(C) is true, then
+            // 13. a. Let A be the result of calling the [[Construct]] internal method 
+            // of C with an argument list containing the single item len.
+            // 14. a. Else, Let A be ArrayCreate(len).
+            var A = isCallable(C) ? Object(new C(len)) : new Array(len);
+
+            // 16. Let k be 0.
+            var k = 0;
+            // 17. Repeat, while k < len… (also steps a - h)
+            var kValue;
+            while (k < len) {
+                kValue = items[k];
+                if (mapFn) {
+                    A[k] = typeof T === 'undefined' ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                } else {
+                    A[k] = kValue;
+                }
+                k += 1;
+            }
+            // 18. Let putStatus be Put(A, "length", len, true).
+            A.length = len;
+            // 20. Return A.
+            return A;
+        };
+    }());
+}
+}
+
+RDL.applyCssonCards = function (cards) {
+    for (var i = 0; i < cards.length; i++) {
+        cards[i].classList.add("thumb-" + cards[i].parentElement.attributes["data-skincd"].value.toLowerCase());
+    }
+}
+
+RDL.applyImageCss = function () {
+    var cards = document.getElementsByClassName('list-item-thumb');
+    if (window.RDL.applyCardCss && cards && cards.length > 0) {
+        RDL.applyCssonCards(cards);
+    }
+    else {
+        setTimeout(function (cards) {
+            RDL.applyImageCss();
+        }, 50);
+    }
+}
+
+RDL.checkSafariBrowser = function () {
+    if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
+        document.body.classList.add('safari');
+        var head = document.head || document.getElementsByTagName('head')[0];
+        var style = document.createElement('style');
+        style.type = 'text/css';
+        var css = '::-webkit-scrollbar{-webkit-appearance: none;width: 7px;}::-webkit-scrollbar-thumb {border-radius: 4px;background-color: rgba(0, 0, 0, .5);-webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);}';
+        style.appendChild(document.createTextNode(css));
+        head.appendChild(style);
+    }
+}
+
+RDL.polyfillNodelistForeach = function () {
+    //polyfill to support foreach on NodeList
+    if (window.NodeList && !NodeList.prototype.forEach) {
+        NodeList.prototype.forEach = function (callback, thisArg) {
+            thisArg = thisArg || window;
+            for (var i = 0; i < this.length; i++) {
+                callback.call(thisArg, this[i], i, this);
+            }
+        };
+    }
+}
+
+RDL.polyfillClosestMatch = function (){
+    if (!Element.prototype.matches) {
+        Element.prototype.matches =
+          Element.prototype.msMatchesSelector || 
+          Element.prototype.webkitMatchesSelector;
+      }
+      
+      if (!Element.prototype.closest) {
+        Element.prototype.closest = function(s) {
+          var el = this;
+      
+          do {
+            if (Element.prototype.matches.call(el, s)) return el;
+            el = el.parentElement || el.parentNode;
+          } while (el !== null && el.nodeType === 1);
+          return null;
+        };
+      }
+}
+
+RDL.loadGTM = function (w, d, s, l, i) {
+    w[l] = w[l] || []; w[l].push({
+        'gtm.start':
+            new Date().getTime(), event: 'gtm.js'
+    }); var f = d.getElementsByTagName(s)[0],
+        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+            'https://www.googletagmanager.com/gtm.js?id=' + i + dl; 
+            if(RDL.GetQueryString("isPartytown") == 1){
+                j.type='text/partytown';
+            }
+            f.parentNode.insertBefore(j, f);
+    if(RDL.GetQueryString("isPartytown") == 1){
+        window.dispatchEvent(new CustomEvent('ptupdate'));
+    }
+}
+//End Google Tag Manager
+
+RDL.loadgtms = function () {
+    var isPartytown = RDL.GetQueryString("isPartytown") == 1;
+    if(!isPartytown){
+        RDL.setcookieConsentDatainLocalStorage();
+    }    
+    RDL.loadGTM(window, document, 'script', 'dataLayer', RDL.Portal.gtmKey1);
+    if(RDL.Portal.gtmKey2){
+        RDL.loadGTM(window, document, 'script', 'dataLayer', RDL.Portal.gtmKey2);
+    }    
+}
+
+RDL.loadFont = function () {
+    var aFont = document.createElement('link');
+    aFont.type = 'text/css';
+    aFont.rel = "stylesheet";
+    aFont.href = "https://fonts.googleapis.com/css?family=Alex+Brush|Italianno&display=swap";
+    document.head.appendChild(aFont);
+}
+
+RDL.LoadThirdPartyJS = function () {
+    var isPartytown = RDL.GetQueryString("isPartytown") == 1;
+    if (window.jQuery && !isPartytown) {
+        // Google Tag Manager On Page Load EB-784
+        RDL.loadgtms();
+    }
+    else {
+        if(!isPartytown){
+            var jqueryLoadTimer = setInterval(function () {
+                if (window.jQuery) {
+                    clearInterval(jqueryLoadTimer);
+                    // Google Tag Manager On Page Load EB-784
+                    RDL.loadgtms();
+                }
+            }, 100);
+        }        
+    }
+    RDL.isINTL && RDL.Portal.portalCd == "lde" && RDL.loadFont();
+}
+
+RDL.handlePostPageLaod = function () {
+    if (RDL.isHowItWorks()
+        && window.RDL.UserClaims.role == "Guest") {
+        triggerHIWStage = true;
+        if(window.RDL.Localization)
+            document.title = window.RDL.Localization.pTitleHiw;
+    if(RDL.Portal.portalCd == 'cln'){
+            setTimeout(function () {
+                if ((location.pathname == RDL.Paths.BasePath || location.pathname == RDL.Paths.BasePath + '/')) {
+                    if(!RDL.disableHIW){
+                        document.getElementById('howItWorks').classList.remove('d-none');
+                    }
+                }
+                RDL.closeAnimation();
+            }, 3000);
+        } else {
+            setTimeout(function () {
+                if ((location.pathname == RDL.Paths.BasePath || location.pathname == RDL.Paths.BasePath + '/')) {
+                    RDL.cvUploadTest();
+                    RDL.uploadNewFLow();
+                    RDL.hiwCopyChanges();
+                    if (typeof window.updateTextForMx === 'function' &&  RDL.updateTextForMx && RDL.countryDetails.countryCode && RDL.countryDetails.countryCode.toLowerCase() === 'mx') {
+                        window.updateTextForMx();
+                    }
+                    if(!RDL.disableHIW){
+                        document.getElementById('howItWorks').classList.remove('d-none');
+                    }
+                }
+                RDL.closeAnimation();
+            }, 2000); 
+        }
+    } else {
+        RDL.startPageLoader();
+        if(RDL.Portal.portalCd == 'cln'){
+            setTimeout(function () {
+                RDL.closeAnimation();
+            }, 3000);
+        } else{
+            setTimeout(function () {
+                RDL.closeAnimation();
+            }, 2000);
+        }
+    }
+    if(!RDL.Portal.reduceHIWtime)
+        RDL.loadJs(packageUrl);
+    RDL.handlepostpageload = true;
+    if (window.RDL.isRefresh) {
+        if (window.isNewOnboarding)
+            loadImageFiles();
+        window.RDL.CountryCode = window.RDL.UserClaims.countryCode;
+        window.RDL.isloggedIn = (window.RDL.UserClaims.role != "User") ? false : true;
+        if(!RDL.noMixpanel){
+            RDL.handleAliasAndIdentify();
+        }
+        window.RDL.isLoadJS = (!window.RDL.isImplementUserConsent ? true : window.RDL.isloggedIn
+            ? true : (window.RDL.readCookie("user-consent") == 1)) ? true : false;//true    
+        RDL.AsyncSegTrack(RDL.isloggedIn);
+        RDL.builderEntryUrl = window.location.href
+        var eventprop = {'builder type': 'resumes'}
+        if(!RDL.isINTL){
+            eventprop['builder entry url'] = RDL.builderEntryUrl
+        }
+        window.RDL.TrackEvents('enter builder',  eventprop , null, window.RDL.isloggedIn);
+        // Code to trigger Enter builder stage.
+        if (triggerHIWStage && window.RDL.UserClaims.user_uid && window.RDL.UserClaims.user_uid != emptyGuid) {
+            triggerHIWStage = false;
+            RDL.callAjax(window.RDL.Paths.BaseApiUrl + 'users/saveuserstages?userId=' + RDL.UserClaims.user_uid +
+                '&productCd=' + window.RDL.PortalSettings.ConfigureProductCd + "&userStageId=" + 25
+                + "&portalCd=" + window.RDL.PortalSettings.ConfigurePortalCd + "&strategyId=" + RDL.strategyId,
+                "PATCH", true, true,null,null,{});
+        }
+    }
+    //setCountryDetails();
+     !RDL.Portal.avoidloadingsvg && !RDL.joshuaTreeINTL &&  RDL.Skins.forEach(function (element) {
+        var img = document.createElement('img');
+         if (!isIE) {
+             if (RDL.isLiteBuilder) {
+                 var liteSVGImageUrl = window.RDL.Paths.ResourcePath;
+                 liteSVGImageUrl = liteSVGImageUrl.replace('/' + RDL.Portal.portalCd.toLowerCase() + '/',
+                     '/lclite/images/' + RDL.Portal.portalCd.toLowerCase() + '/');
+                 img.src = liteSVGImageUrl + element.blobURL;
+             }
+             else {
+                 img.src = RDL.Paths.ResourcePath + element.blobURL;
+             }
+         }
+        document.getElementById('afterLoadContent').appendChild(img);
+    });
+
+    RDL.loadFile();
+    var bodyDom = document.getElementsByTagName('body')[0];
+    if (bodyDom.classList.contains('no-scroll')) {
+        bodyDom.classList.remove('no-scroll')
+    }
+    if (RDL.GetQueryString('rx') == "1") {
+        bodyDom.classList.add('rex-view');
+    }
+    var sknCD = RDL.GetQueryString('skincd');
+    if (sknCD && sknCD.toLowerCase() != 'null' && sknCD.toLowerCase() != "undefined"){
+        RDL.SkinFromPortal = sknCD.toUpperCase(); //necessary to keep it in upper case
+    }    
+    var colorCD = RDL.GetQueryString('theme') ? unescape(RDL.GetQueryString('theme')) : null;
+    if(colorCD && colorCD.toLowerCase() != 'null' && colorCD.toLowerCase() != 'undefined'){
+        RDL.ColorFromPortal = colorCD
+    }
+    if (RDL.GetQueryString('grammarly') == "1") {
+        RDL.enableGrammarly = true;
+    }
+    var assetsUrl = RDL.getAssetsURL();
+    if(window.location.hostname.indexOf('local')>-1){       
+        RDL.loadJs("https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js");            
+    }
+    else{
+        if(RDL.isLiteBuilder && RDL.liteFlowRootURLCultureSlug){
+            RDL.loadJs("/" + RDL.liteFlowRootURLCultureSlug + "/blob/common/scripts/jquery-3.5.1.min.js")
+        }
+        else if(RDL.isLiteBuilder && !RDL.liteFlowRootURLCultureSlug){
+            RDL.loadJs("/blob/common/scripts/jquery-3.5.1.min.js")
+        }
+        else{                        
+            RDL.loadJs(assetsUrl+ "/blob/common/scripts/jquery-3.5.1.min.js")
+        }
+        
+    }
+    //loadJs("https://cdn.optimizely.com/js/" + RDL.Portal.optimizelyKey + ".js");
+    RDL.loadJs("https://apis.google.com/js/api.js?onload=loadPicker");
+    RDL.loadJs("https://accounts.google.com/gsi/client");
+    if(RDL.dropBoxDrive && !RDL.isBaseRoute){
+        RDL.dropBoxJsCalled=true;
+        RDL.loadJsWithKey("https://www.dropbox.com/static/api/2/dropins.js", "dropboxjs", RDL.dropBoxDrive.key);    
+    }        
+    if(assetsUrl){
+        RDL.callAjax(assetsUrl + "/blob/common/scripts/es6-shim.min.js", "GET", true, false, RDL.polyfillArrayFrom);
+    }else{
+        RDL.callAjax(window.RDL.Paths.rootURL + window.RDL.Paths.BasePath + "/scripts/es6-shim.min.js", "GET", true, true, RDL.polyfillArrayFrom);
+    }   
+    // callAjax("http://local.resume-now.com/build-resume/scripts/es6-shim.min.js" , "GET", true, true, polyfillArrayFrom);
+
+    RDL.isINTL && RDL.applyImageCss();
+    RDL.checkSafariBrowser();
+    RDL.polyfillNodelistForeach();
+    RDL.polyfillClosestMatch();
+    if (window.RDL.isLoadJS)
+        window.RDL.LoadThirdPartyJS();
+}
+
+RDL.handleGuestUser = function () {
+    var timerStart=0;
+    var timeout = RDL.Portal.reduceHIWtime ? 1:100;
+    var TrackAccountsInterval = setInterval(function () {
+        if (((typeof BOLD != 'undefined' && typeof BOLD.Accounts != 'undefined') || (typeof window.LOGIN != 'undefined' && typeof window.LOGIN.Accounts != 'undefined')) 
+        && ((typeof analytics != 'undefined' && typeof mixpanel != 'undefined' 
+        && typeof mixpanel.get_distinct_id != 'undefined') || timerStart>30 || RDL.noMixpanel)) {
+            var LOGIN = window.LOGIN || window.BOLD;
+            LOGIN.Accounts.createGuest(window.RDL.PortalSettings.ConfigureProductCd, null, window.location.href).then(function (guest) {
+                //"https://local.resume-now.com:8080"           
+                if (!(window.location.pathname == (window.RDL.Paths.BasePath + "/") || window.location.pathname == (window.RDL.Paths.BasePath) ||
+                        decodeURIComponent(window.location.pathname).includes(RDL.isINTL ? window.RDL.Localization.url_section_slug : RDL.url_section_slug) || decodeURIComponent(window.location.pathname).includes(RDL.isINTL ? window.RDL.Localization.url_final_resume : RDL.url_final_resume))) {
+                    window.location = window.RDL.Paths.rootURL + window.RDL.Paths.BasePath;
+                }
+                var claimsPromise = new Promise(function (resolve, reject) {
+                    RDL.Claims(true, resolve, guest.claims);
+                })
+                claimsPromise.then(function (data) {
+                    RDL.handlePostPageLaod();
+                    RDL.handlePostPageLaoded = true;
+                });
+        });
+            clearInterval(TrackAccountsInterval);
+        }
+        timerStart++;
+    }, timeout);
+}
+RDL.intervalCounter=0;
+RDL.handleGuestUserScenario = function(){
+    if (!window.RDL.UserClaims || !window.RDL.UserClaims.user_uid || window.RDL.UserClaims.user_uid == emptyGuid) {
+        if (navigator.cookieEnabled) {
+            if (window.RDL.GetQueryString('frmbldr')) {
+                window.location = window.RDL.Paths.rootURL;
+            } else {
+                RDL.handleGuestUser();
+            }
+        } else window.location = window.RDL.Paths.rootURL;
+    }
+}
+RDL.callTrackingApi = function () {
+    RDL.intervalCounter=RDL.intervalCounter+1;
+    if(RDL.intervalCounter > 300){
+        clearInterval(funcPointer);
+        RDL.handleGuestUserScenario();
+        return;
+    }
+    if (typeof TS != 'undefined') {
+        clearInterval(funcPointer);
+        var trackPromise;
+        try{
+        if(RDL.isSecondaryPortal){
+            trackPromise = TS.Track(_tsa['prcd'], RDL.PortalSettings.ConfigurePortalCd, _tsa['includeUseragent'], _tsa['includeGeolocation'], true, "/" + RDL.countrySlug, true);
+        }
+        else{
+            if(RDL.usev9VisitorJSURL){
+               var cookiePath = null;
+               var isRewriteConfiguredWithPath = false;
+               var skipVisitCreation = true;              
+               trackPromise = TS.Track(_tsa['prcd'], RDL.PortalSettings.ConfigurePortalCd, _tsa['includeUseragent'], _tsa['includeGeolocation'], _tsa['isRewriteConfigured'],cookiePath,isRewriteConfiguredWithPath,skipVisitCreation);
+
+            }
+            else{
+            trackPromise = TS.Track(_tsa['prcd'], RDL.PortalSettings.ConfigurePortalCd, _tsa['includeUseragent'], _tsa['includeGeolocation'], _tsa['isRewriteConfigured']);
+            }
+        }
+    }
+    catch(err){
+        console.log(err);
+    }
+        
+        var defaultPromise = new Promise(function (resolve, reject) {
+            setTimeout(resolve, 1500);
+        });
+        Promise.race([trackPromise, defaultPromise]).then(function (value) {
+            if(!RDL.Portal.reduceHIWtime)
+                RDL.handleGuestUserScenario();
+        });
+    }
+}
+
+RDL.checkBrowserCompatibility = function () {
+    var objAgent = navigator.userAgent;
+    var objfullVersion = '' + parseFloat(navigator.appVersion);
+    var objOffsetVersion;
+    var legacyEditorURL;
+    if (window.location.hostname) {
+        legacyEditorURL = window.location.protocol + "//" + window.location.hostname + '/information/unsupportedbrowsers.aspx';
+    }
+    else {
+        legacyEditorURL = window.location.origin + '/information/unsupportedbrowsers.aspx';
+    }
+
+    if(!((/Chrome/.test(navigator.userAgent) || /CriOS/.test(navigator.userAgent)) || navigator.userAgent.match(/Opera|OPR\//) || navigator.userAgent.toLowerCase().indexOf('samsung') > -1)){    
+    // In Microsoft internet explorer 
+    if ((objOffsetVersion = objAgent.indexOf("MSIE")) != -1) {
+        objfullVersion = objAgent.substring(objOffsetVersion + 5);
+        if (objfullVersion.substring(0, objfullVersion.indexOf(".")) <= 9) {
+            window.location = legacyEditorURL;
+        }
+    }
+    // In Safari 
+    else if ((objOffsetVersion = objAgent.indexOf("Safari")) != -1) {
+        objfullVersion = objAgent.substring(objOffsetVersion + 7);
+        if ((objOffsetVersion = objAgent.indexOf("Version")) != -1) {
+            objfullVersion = objAgent.substring(objOffsetVersion + 8);
+            if (objfullVersion.substring(0, objfullVersion.indexOf(".")) <= 8) {
+                window.location = legacyEditorURL;
+            }
+        }
+    }
+}
+
+    if(RDL.GetQueryString("isPartytown") == 1){
+        RDL.loadgtms();
+    }    
+    var configPromise = new Promise(function (resolve, reject) {
+        RDL.callAjax(RDL.getConfigUrl(), 'GET', true, false, RDL.handleConfig, resolve, null, true);
+    })
+    Promise.all([getFeaturesPromise, configPromise]).then(function (data) {
+        if(!RDL.recPortalFeature && RDL.isLowerEnvironment() && RDL.defaultFeatureCode && RDL.featureCodes.length==0){
+            RDL.featureCodes = JSON.parse(RDL.defaultFeatureCode);
+        }
+        if(RDL.isINTL || RDL.Portal.loadAccounts){
+            RDL.loadJs(RDL.accountsJSURL);
+        }                
+        if (RDL.isLiteBuilder) {
+            RDL.featureCodes = RDL.featureCodes.filter(function(x){
+                return x !== "HSTAD";
+            });
+        }
+        if(RDL.showTipsOnTTC){
+            RDL.featureCodes = RDL.featureCodes.filter(function(x){
+                return x !== "FSKLR";
+            });
+        }
+        if(RDL.featureCodes.indexOf('DISFBK') != -1){
+            RDL.showFacebookLogin = false;
+        }
+        if(RDL.featureCodes.indexOf('DISGGL') != -1){
+            RDL.showGoogleLogin = false;
+        }
+        console.log("handlepostpageload",RDL.handlepostpageload);
+        
+        if(!RDL.disableSegmentLoading){
+            if(RDL.Portal.commonSegment){
+                if (RDL.isLiteBuilder) {
+                    RDL.loadJs(window.location.protocol + "//" + window.location.hostname + "/" + RDL.liteFlowRootURLCultureSlug + '/common/js/segment.js?v=' + versionNumber);
+                }
+                else {
+                    RDL.loadJs(window.location.protocol + "//" + window.location.hostname + '/common/js/segment.js?v=' + versionNumber,RDL.GetQueryString("isPartytown") == 1);
+                }
+            }
+            else{
+                RDL.loadJs(RDL.getResourceUrl() + 'scripts/segment-io.js?v=' + versionNumber);
+            }
+        }
+        if(RDL.GetQueryString("isPartytown") == 1){
+            RDL.loadJs(window.location.protocol + "//" + window.location.hostname + '/blobcontent/rsm/logData/segment.js?v=' + versionNumber,true);
+        }
+        
+
+        var claimsPromise = new Promise(function (resolve, reject) {
+            if (RDL.UserClaims && RDL.UserClaims.user_uid && RDL.UserClaims.user_uid != emptyGuid) {
+                resolve();
+            }
+            else {
+                RDL.Claims(true, resolve);
+            }
+        })
+
+         var countryClaimsPromise = new Promise(function (resolve, reject){
+            RDL.getCountryClaims().then(function(data) {
+                if(data) RDL.countryDetails=data;
+                else if (!data) {
+                    RDL.countryDetails = {  
+                                        countryCode: RDL.akamaiCountryCode || "US",
+                                        continentCode: "US",
+                                        isEuropianContinent: false,
+                                        isEEACountry: false,
+                                        city: "",
+                                        state: "",
+                                        zip: "",
+                                        ip: ""
+                                    }
+                }
+                if(!(typeof RDL.countryDetails === 'object')){
+                    RDL.countryDetails={};
+                }
+                if(RDL.countryDetails.countryCode == null || RDL.countryDetails.countryCode == undefined || 
+                    !RDL.countryDetails.countryCode){
+                    RDL.countryDetails.countryCode = RDL.akamaiCountryCode || 'US';
+                }
+                if(RDL.countryDetails.countryCode.toLowerCase() == 'ca') 
+                    window.RDL.isCALocalization = true; 
+                if(RDL.GetQueryString("testcountry") ||  RDL.readCookie('testcountry')){                   
+                    var countryCDVal = RDL.GetQueryString("testcountry")                 
+                   if(countryCDVal){
+                    RDL.createCookie('testcountry', countryCDVal.toUpperCase());
+                    RDL.hasCountryQSorCookie = true;
+                   }
+                   else if(RDL.readCookie('testcountry')){
+                       countryCDVal = RDL.readCookie('testcountry');
+                       RDL.hasCountryQSorCookie = true;
+                   }     
+                   if(window.EUCountries.indexOf(countryCDVal.toUpperCase())>-1){
+                        RDL.EULocalization = true;
+                   }
+                   else{
+                        RDL.EULocalization = false;
+                    }   
+                    var continentCDVal = RDL.GetQueryString("customContinent");
+                    if(continentCDVal){
+                        sessionStorage.setItem("customContinent",continentCDVal);
+                    }
+                    else{
+                        continentCDVal = sessionStorage.getItem("customContinent");
+                    }
+                   if(isRestOfROWCountry(countryCDVal,continentCDVal)){
+                        RDL.restOfROW = true;
+                   }
+                   if(!RDL.isINTL) {
+                       RDL.countryDetails.countryCode = availableCountryCDs.indexOf(countryCDVal.toLowerCase()) > -1 ? countryCDVal.toUpperCase() : 'US';
+                    } else {
+                        RDL.countryDetails.countryCode = countryCDVal.toUpperCase();
+                    }
+                }
+
+                if(RDL.franceGrouplst){
+                    if(RDL.franceGrouplst.indexOf(RDL.countryDetails.countryCode.toUpperCase()) != -1){
+                        RDL.countryDetails.countryCode = "FR";
+                    }
+                }
+                
+                RDL.restOfROW = !RDL.isINTL && isRestOfROWCountry();
+                RDL.EULocalization = !RDL.isINTL && !RDL.restOfROW && window.EUCountries.indexOf(RDL.countryDetails.countryCode)>-1;
+                RDL.Portal.enableHeadShotSkin = !RDL.EULocalization && !RDL.restOfROW && RDL.Portal.enableHeadShotSkin;
+
+                var isPseudoLocaleFlow = RDL.isPseudoLocaleFlow();
+                var isEnvFlow = RDL.isEnvFlow();
+                var localizationUrl = RDL.getLocalizationUrl(isPseudoLocaleFlow,isEnvFlow);
+				// var NativelocalizationPromise = null;
+                // if(RDL.Portal.uselocalizationDiffFolder && RDL.countryDetails && availableCountryCDs.indexOf(RDL.countryDetails.countryCode.toLowerCase())>-1){
+                //     NativelocalizationPromise = loadNativeLocalization(localizationUrl);
+                //     localizationUrl = localizationUrl.replace('/'+RDL.countryDetails.countryCode.toLowerCase(),'');
+                // }
+                
+                var promiseArr = []
+                if(RDL.EULocalization || RDL.restOfROW || RDL.enableplaceHolderRowForCTR){
+                    promiseArr.push(RDL.getCountryData());
+                }
+                RDL.templateRecommendWidgetROW = !RDL.isINTL && ["us","in","pk"].indexOf(RDL.countryDetails.countryCode.toLowerCase())==-1
+                var localizationPromise = RDL.getLocalizationPromise(localizationUrl,isPseudoLocaleFlow||isEnvFlow);
+                promiseArr.push(localizationPromise);
+				Promise.all(promiseArr).then(function(data){
+                    RDL.localizationLoaded = true;
+                    if(RDL.Portal.reduceHIWtime)
+                        RDL.loadJs(packageUrl);
+                    resolve();
+                });             
+            });
+         }); 
+
+        Promise.all([claimsPromise, countryClaimsPromise]).then(function (data) {
+            RDL.assignFrontendExperimentVariant();            
+            RDL.claimsLoaded = true;
+            _tsa['accoundcd'] = window.RDL.VisitorApiSetting.AccountCode;
+
+            _tsa['pgcd'] = '';
+            _tsa['prcd'] = window.RDL.VisitorApiSetting.PRODUCT_CODE;
+            if (window.RDL.VisitorApiSetting.EnvMode != "PROD") {
+                _tsa['enmd'] = window.RDL.VisitorApiSetting.EnvMode;
+            }
+            _tsa['includeUseragent'] = true;
+            _tsa['includeGeolocation'] = false;
+            _tsa['isRewriteConfigured'] = true;
+            if (window.RDL.isINTL) {
+                _tsa['isRewriteConfigured'] = window.RDL.VisitorApiSetting.JSURL.indexOf(window.location.origin + "/visitor/") != -1;
+            } 
+            if (window.RDL.isLiteBuilder) {
+                _tsa['isRewriteConfigured'] = true;
+            }
+
+            if(!RDL.usev9VisitorJSURL){
+            funcPointer = setInterval(RDL.callTrackingApi, 10);
+            (function (d, s, id) {
+                var js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) return;
+                js = d.createElement(s); js.id = id;
+                js.src = window.RDL.VisitorApiSetting.JSURL;
+                fjs.parentNode.insertBefore(js, fjs);
+            }(document, 'script', 'visitor-jssdk'));
+            }
+
+            if (window.RDL.UserClaims.user_uid && window.RDL.UserClaims.user_uid != emptyGuid) { 
+                var setUserCountry = RDL.setUserCountryCD(RDL.UserClaims.user_uid);
+                Promise.all([setUserCountry]).then(function (data) {
+                    if(!RDL.handlePostPageLaoded){
+                        if (window.RDL.pageLoaded) {
+                            RDL.handlePostPageLaod();
+                        }
+                        else {
+                            var pageLoadTimer = setInterval(function () {
+                                if (window.RDL.pageLoaded) {
+                                    clearInterval(pageLoadTimer);
+                                    RDL.handlePostPageLaod();
+                                }
+                            }, 100);
+                        }
+                    }
+                });
+            }
+        })
+    });
+}
+
+window.useAkamaiHeaders = function () {
+    var countryCode;
+    var ajaxRequest = new XMLHttpRequest();
+    ajaxRequest.open("HEAD", document.location, true); // initializes request
+    ajaxRequest.send(); // sends request (body is null as method is "HEAD")
+    ajaxRequest.onreadystatechange = function () { // fires when readyState changes
+      if (ajaxRequest.readyState == XMLHttpRequest.HEADERS_RECEIVED) {
+        var countryHeaders = ajaxRequest.getResponseHeader("x-geo-header");
+        if (countryHeaders != null) {
+          countryHeaders = countryHeaders.split(",");
+          countryCode = countryHeaders[1] && countryHeaders[1].split("=")[1];
+        }
+        if(countryCode){
+            RDL.akamaiCountryCode = countryCode;
+        }
+      }
+    }
+  }
+  
+  if(RDL.GetQueryString("isPartytown") != 1){
+    window.useAkamaiHeaders();
+  }  
+function isRestOfROWCountry(countryCode,continentCode){   
+    if(countryCode){
+        if(window.ROWCountries.indexOf(countryCode.toUpperCase())>-1){
+            return true;
+        }
+        if(continentCode && ["na","oc","ot"].indexOf(continentCode.toLowerCase()) >-1){
+            return false;
+        }
+        return ["us","ca","au","nz"].indexOf(countryCode.toLowerCase()) == -1 &&
+                    (window.EUCountries.indexOf(countryCode.toUpperCase()) == -1);
+    }
+    else{
+        if(window.ROWCountries.indexOf(window.RDL.countryDetails.countryCode.toUpperCase())>-1){
+            return true;
+        }
+        return window.RDL.countryDetails.countryCode && 
+            ["us","ca","au","nz"].indexOf(window.RDL.countryDetails.countryCode.toLowerCase()) == -1 &&
+            (window.EUCountries.indexOf(window.RDL.countryDetails.countryCode) == -1) &&
+            window.RDL.countryDetails.continentCode &&
+            ["na","oc","ot"].indexOf(window.RDL.countryDetails.continentCode.toLowerCase()) == -1;
+    } 
+}
+
+RDL.getLocalizationPromise = function(localizationUrl,isPseudoLocaleOrEnvFlow){
+    return new Promise(function(resolve,reject){       
+        RDL.callAjax(localizationUrl, 'GET', true, false, function(data){            
+            if(isPseudoLocaleOrEnvFlow && data==404){
+                RDL.getLocalizationPromise(RDL.localelocalizationURL,isPseudoLocaleOrEnvFlow)
+            }
+            else{
+            RDL.handleLocalizationText(data,resolve);            
+            }
+            resolve();
+        },null,null,true,isPseudoLocaleOrEnvFlow);
+    });
+}
+RDL.checkBrowserCompatibility();
+
+RDL.downLoadFile = function (name, url, fileType, skinCD, docformatName) {
+    var xmlhttp;
+    var sendDownloadEvent = true;
+    var template = RDL.Skins.filter(function (item, index) {
+        return item.skinCD == skinCD;
+    });
+    var templateName = template && template.length > 0 ? template[0].name : '';
+
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.onload = function (event) {
+        var blob = xmlhttp.response;
+        if (navigator.msSaveOrOpenBlob) {
+            navigator.msSaveOrOpenBlob(blob, name + '.' + fileType);
+        } else {
+            var link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = name + '.' + fileType;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+
+    url = templateName ? url + "&templateName=" + templateName : url;
+    url = sendDownloadEvent ? url + "&sendDownloadEvent=" + sendDownloadEvent : url;
+
+    xmlhttp.open('GET', url, true);
+    xmlhttp.withCredentials = true;
+    xmlhttp.responseType = "blob";
+    xmlhttp.send();
+}
+
+RDL.getClientExperimentJSPath = function () {    
+    var environment = window.location.host.split('.')[0];
+    var envName = "";    
+    switch (environment) {
+        case "qa": 
+            envName = "qa.";          
+            break;
+        case "reg":
+        case "regression":
+        case "pre-reg":
+        case "pen":            
+            envName = "reg.";      
+            break;
+        case "loc":            
+            envName = "loc.";
+            break;
+        case "stg":
+            envName = "stg.";           
+            break;
+        case "perf":
+            envName = "perf.";
+            break;
+        case "www":
+            envName = "www."           
+            break;
+    }
+    if (RDL.useAssetsPath){
+        if(environment=='www'){
+            envName = RDL.ASSETS_IDENTIFIER
+        }
+        else if(environment=='qa' || environment=='reg' || environment=='stg' )
+        envName = environment + "-" + RDL.ASSETS_IDENTIFIER;
+    }
+    var path = environment == "local" ? "https://experimentssandbox.blob.core.windows.net/ui-experimentation/"+RDL.Portal.portalCd+"/experiment-spa.js" : 
+                            (RDL.isLiteBuilder ? "https://"+envName+RDL.Portal.portalUrl+ "/"+RDL.liteFlowRootURLCultureSlug +"/ui-experimentation/" +RDL.Portal.portalCd+"/experiment-spa.js" :
+                            "https://"+envName+RDL.Portal.portalUrl+"/ui-experimentation/" +RDL.Portal.portalCd+"/experiment-spa.js");
+    return path;
+}
+
+RDL.animationFinished = function () {
+    window.RDL.isAnimationCompleted = true;
+}
+RDL.OnBoardingSteps = (function (data) {
+    var result = {};
+    var steps = data || ["CHOOSE_TEMPLATE", "RESUME_OPTIONS", "NAME", "LOGIN", "CONGRATS"];
+    for (i = 0; i < steps.length; i++) {
+        result[steps[i]] = steps[i];
+    }
+    result.steps = steps;
+    return result;
+})();
+
+RDL.isNullOrWhitespace = function (input) {
+    if (input == null || input == undefined) return true;
+    return input.replace(/\s/g, '').length < 1;
+}
+
+RDL.GetNewText = function (editorText, tempText) {
+    var div = $('<div>');
+    var con = $(editorText);
+    div.html(con);
+    var innerText = div.text();
+    if (innerText != tempText) {
+        $(div.children()[0]).text(tempText);
+        editorText = div.html();
+    }
+    return editorText;
+}
+
+RDL.LogError = function (errorMessage, componentStack, logAsInfo, docId) {
+    var mixpanelpropsVal = window.RDL.readCookie("mixpanelprops");
+    var mixPanelValObj = JSON.parse(unescape(mixpanelpropsVal));
+    var browserName = '';
+    var currentUrl = '';
+    if (mixPanelValObj) {
+        browserName = mixPanelValObj["$browser"];
+    }
+    currentUrl = window.location.href;
+    var errorObj = {
+        errorMessage: errorMessage,
+        componentStack: componentStack,
+        logAsInfo: logAsInfo,
+        docId: docId,
+        sourceAppCd: window.RDL.sourceAppCD,
+        productCD: RDL.PortalSettings.ConfigureProductCd,
+        deviceType: 'desktop',
+        browser: browserName,
+        currentUrl: currentUrl,
+        isINTL:RDL.isINTL,
+        portalCD:RDL.PortalSettings.ConfigurePortalCd
+    }
+    fetch(window.globalCompVars.BaseApiUrlV2 + 'errors/log', {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(errorObj)
+    })
+}
+
+RDL.LoadGoogleMapsScript = function (clientKey, channelKey, bLoadGoogleMapScript) {
+    if (RDL.countryDetails && RDL.countryDetails.countryCode == 'US' && (RDL.PortalSettings.ConfigurePortalCd == 'RNA' || RDL.PortalSettings.ConfigurePortalCd == 'CLN')) {
+        return;
+    }
+    bLoadGoogleMapScript = typeof (bLoadGoogleMapScript) != "undefined" ? bLoadGoogleMapScript : true;
+    if (bLoadGoogleMapScript) {
+        var env = window.location.host.split('.')[0];
+        env = env == "www" ? "" : "-qa";
+        channelKey = "rn-" + channelKey + env;
+        var mapsUrl = "//maps.googleapis.com/maps/api/js?client=@@clientKey&channel=@@channelKey&libraries=places";
+        (function (d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) return;
+            js = d.createElement(s); js.id = id;
+            js.src = mapsUrl.replace("@@clientKey", clientKey).replace("@@channelKey", channelKey);
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'googleMaps-js'));
+    }
+}
+
+RDL.replaceMapsChannel = function (channel) {
+    var gMapsElem = document.getElementById('googleMaps-js');
+    if (gMapsElem) {
+        var gmChannelKey = channel;
+        if (gMapsElem.getAttribute("src").indexOf(gmChannelKey) < 0) {
+            window.google = {};
+            gMapsElem.parentNode.removeChild(gMapsElem);
+            window.RDL.LoadGoogleMapsScript(RDL.mapsClientKey, gmChannelKey, RDL.enableGoogleScript);
+        }
+    }
+}
+
+RDL.OptimizelyEventPush = function (eventName) {
+    // ensures the optimizely object is defined globally using
+    window['optimizely'] = window['optimizely'] || [];
+
+    // sends a tracking call to Optimizely for the given event name. 
+    window['optimizely'].push({
+        type: "event",
+        eventName: eventName
+    });
+}
+
+RDL.Timer = (function () {
+    var time = 0;
+    var lastSaved = "Last Saved ";
+    var formattedTime = "";
+    var interval = null;
+
+    var init = function () {
+        interval = setInterval(currentTime, 60000);
+    }
+
+    var setTimerNode = function () {
+        var timer = document.getElementById("timer");
+        if (timer) {
+            timer.innerText = getFormattedTime();
+        }
+    }
+
+    var currentTime = function () {
+        time++;
+        setTimerNode();
+    }
+
+    var getFormattedTime = function () {
+        formattedTime = lastSaved + time;
+        if (time == 0) {
+            formattedTime = lastSaved + "Just Now";
+        }
+        else if (time == 1) {
+            formattedTime += " minute ago";
+        }
+        else if (time > 1 && time <= 59) {
+            formattedTime += " minutes ago";
+        }
+        else {
+            formattedTime = lastSaved + "Over an hour ago";
+        }
+        return formattedTime;
+    }
+
+    var reset = function () {
+        time = 0;
+        setTimerNode();
+        clearInterval(interval);
+        init();
+    }
+
+    return {
+        init: init,
+        getFormattedTime: getFormattedTime,
+        reset: reset
+    };
+}());
+
+RDL.getAnalyticsValues = function () {
+    if(RDL.isSecondaryPortal){
+        vstr = window.RDL.readCookie("spvstrType");
+    } else{
+        vstr = window.RDL.readCookie("vstrType");
+    } 
+    userType = vstr == null ? "New" : "Returning";
+    url = window.location.origin + window.location.pathname;
+    path = window.location.pathname.replace(window.RDL.Paths.BasePath, "");
+    if (path == "")
+        path = "/";
+    isLoggedin = window.RDL.readCookie(".AspNet.LCAuth") != null ? 'true' : 'false';
+}
+
+RDL.showLoaderOverlay = function (hideLoaderLine) {
+    if (hideLoaderLine) {
+        document.getElementsByClassName("loader-line")[0].classList.add("d-none");
+    }
+    document.getElementById('overlayLoader').classList.remove('d-none');
+}
+
+RDL.hideLoaderOverlay = function (hideLoaderLine) {
+    if (hideLoaderLine) {
+        document.getElementsByClassName("loader-line")[0].classList.remove("d-none");
+    }
+    document.getElementById('overlayLoader').classList.add('d-none');
+}
+
+RDL.preventKeys = function (event) {
+    if (event.which === 13) {
+        event.preventDefault();
+    }
+};
+
+RDL.BuilderUsageTrackEvents = function (action, screenName, label, islogin, clickOption,flowFirstScreen,uploadScreen, val) {
+    var eventpropval = {}
+    if (clickOption) {
+        eventpropval = { 'action': action, 'builder type': 'resumes', 'screen name': screenName, 'click option': clickOption }
+    }
+    else {
+        eventpropval = { 'action': action, 'builder type': 'resumes', 'screen name': screenName }
+    }
+    if(!RDL.isINTL && flowFirstScreen){
+        eventpropval['flow first screen name']= flowFirstScreen
+        if(RDL.builderEntryUrl){
+            eventpropval['builder entry url']= RDL.builderEntryUrl
+        }
+    }
+    if(RDL.isLiteBuilder){
+        eventpropval['resume locale'] = RDL.cultureCD;
+    }
+    if(typeof uploadScreen != 'undefined'){
+        eventpropval['upload user modal'] = uploadScreen ? 'True' :'False';
+    }
+    if(RDL.optimizeTemplateSearcher > 2){
+        var prop = "FALSE";
+        if(sessionStorage.getItem("skinCDFromPortal")) prop = "TRUE";
+        if (val || screenName == "resume upload") eventpropval['preselected template to upload flow'] = prop;
+        if((screenName == "finalize" || screenName == "Boost your experience section modal on finalize") && sessionStorage.getItem('uploadSelected') == '1') eventpropval['Upload User Finalize Flow'] = "TRUE";
+    }
+    RDL.TrackEvents('builder usage', eventpropval, null, islogin);
+};
+
+RDL.UpdateMixPanelCookieLCUK = function () {
+    try {
+        var mixPanelProps = RDL.readCookie("mixpanelprops");
+        if (mixPanelProps != null) {
+            mixPanelProps = unescape(mixPanelProps);
+            mixPanelProps = JSON.parse(mixPanelProps);
+            delete mixPanelProps.mp_name_tag;
+            delete mixPanelProps.id;
+            mixPanelProps = JSON.stringify(mixPanelProps);
+            mixPanelProps = escape(mixPanelProps);
+            RDL.createCookie("mixpanelprops", mixPanelProps);
+        }
+    } catch (e) {
+        console.log("Error in updating mixpanel cookie LCUK ")
+    }
+}
+
+RDL.SHA256 = function (s) {
+    var chrsz = 8;
+    var hexcase = 0;
+    function safe_add(x, y) {
+        var lsw = (x & 0xFFFF) + (y & 0xFFFF);
+        var msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+        return (msw << 16) | (lsw & 0xFFFF);
+    }
+    function S(X, n) { return (X >>> n) | (X << (32 - n)); }
+    function R(X, n) { return (X >>> n); }
+    function Ch(x, y, z) { return ((x & y) ^ ((~x) & z)); }
+    function Maj(x, y, z) { return ((x & y) ^ (x & z) ^ (y & z)); }
+    function Sigma0256(x) { return (S(x, 2) ^ S(x, 13) ^ S(x, 22)); }
+    function Sigma1256(x) { return (S(x, 6) ^ S(x, 11) ^ S(x, 25)); }
+    function Gamma0256(x) { return (S(x, 7) ^ S(x, 18) ^ R(x, 3)); }
+    function Gamma1256(x) { return (S(x, 17) ^ S(x, 19) ^ R(x, 10)); }
+    function core_sha256(m, l) {
+        var K = new Array(0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5, 0x3956C25B, 0x59F111F1, 0x923F82A4, 0xAB1C5ED5, 0xD807AA98, 0x12835B01, 0x243185BE, 0x550C7DC3, 0x72BE5D74, 0x80DEB1FE, 0x9BDC06A7, 0xC19BF174, 0xE49B69C1, 0xEFBE4786, 0xFC19DC6, 0x240CA1CC, 0x2DE92C6F, 0x4A7484AA, 0x5CB0A9DC, 0x76F988DA, 0x983E5152, 0xA831C66D, 0xB00327C8, 0xBF597FC7, 0xC6E00BF3, 0xD5A79147, 0x6CA6351, 0x14292967, 0x27B70A85, 0x2E1B2138, 0x4D2C6DFC, 0x53380D13, 0x650A7354, 0x766A0ABB, 0x81C2C92E, 0x92722C85, 0xA2BFE8A1, 0xA81A664B, 0xC24B8B70, 0xC76C51A3, 0xD192E819, 0xD6990624, 0xF40E3585, 0x106AA070, 0x19A4C116, 0x1E376C08, 0x2748774C, 0x34B0BCB5, 0x391C0CB3, 0x4ED8AA4A, 0x5B9CCA4F, 0x682E6FF3, 0x748F82EE, 0x78A5636F, 0x84C87814, 0x8CC70208, 0x90BEFFFA, 0xA4506CEB, 0xBEF9A3F7, 0xC67178F2);
+        var HASH = new Array(0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A, 0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19);
+        var W = new Array(64);
+        var a, b, c, d, e, f, g, h, i, j;
+        var T1, T2;
+        m[l >> 5] |= 0x80 << (24 - l % 32);
+        m[((l + 64 >> 9) << 4) + 15] = l;
+        for (var i = 0; i < m.length; i += 16) {
+            a = HASH[0];
+            b = HASH[1];
+            c = HASH[2];
+            d = HASH[3];
+            e = HASH[4];
+            f = HASH[5];
+            g = HASH[6];
+            h = HASH[7];
+            for (var j = 0; j < 64; j++) {
+                if (j < 16) W[j] = m[j + i];
+                else W[j] = safe_add(safe_add(safe_add(Gamma1256(W[j - 2]), W[j - 7]), Gamma0256(W[j - 15])), W[j - 16]);
+                T1 = safe_add(safe_add(safe_add(safe_add(h, Sigma1256(e)), Ch(e, f, g)), K[j]), W[j]);
+                T2 = safe_add(Sigma0256(a), Maj(a, b, c));
+                h = g;
+                g = f;
+                f = e;
+                e = safe_add(d, T1);
+                d = c;
+                c = b;
+                b = a;
+                a = safe_add(T1, T2);
+            }
+            HASH[0] = safe_add(a, HASH[0]);
+            HASH[1] = safe_add(b, HASH[1]);
+            HASH[2] = safe_add(c, HASH[2]);
+            HASH[3] = safe_add(d, HASH[3]);
+            HASH[4] = safe_add(e, HASH[4]);
+            HASH[5] = safe_add(f, HASH[5]);
+            HASH[6] = safe_add(g, HASH[6]);
+            HASH[7] = safe_add(h, HASH[7]);
+        }
+        return HASH;
+    }
+    function str2binb(str) {
+        var bin = Array();
+        var mask = (1 << chrsz) - 1;
+        for (var i = 0; i < str.length * chrsz; i += chrsz) {
+            bin[i >> 5] |= (str.charCodeAt(i / chrsz) & mask) << (24 - i % 32);
+        }
+        return bin;
+    }
+    function Utf8Encode(string) {
+        string = string.replace(/\r\n/g, "\n");
+        var utftext = "";
+        for (var n = 0; n < string.length; n++) {
+            var c = string.charCodeAt(n);
+            if (c < 128) {
+                utftext += String.fromCharCode(c);
+            }
+            else if ((c > 127) && (c < 2048)) {
+                utftext += String.fromCharCode((c >> 6) | 192);
+                utftext += String.fromCharCode((c & 63) | 128);
+            }
+            else {
+                utftext += String.fromCharCode((c >> 12) | 224);
+                utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+                utftext += String.fromCharCode((c & 63) | 128);
+            }
+        }
+        return utftext;
+    }
+    function binb2hex(binarray) {
+        var hex_tab = hexcase ? "0123456789ABCDEF" : "0123456789abcdef";
+        var str = "";
+        for (var i = 0; i < binarray.length * 4; i++) {
+            str += hex_tab.charAt((binarray[i >> 2] >> ((3 - i % 4) * 8 + 4)) & 0xF) +
+                hex_tab.charAt((binarray[i >> 2] >> ((3 - i % 4) * 8)) & 0xF);
+        }
+        return str;
+    }
+    s = Utf8Encode(s);
+    return binb2hex(core_sha256(str2binb(s), s.length * chrsz));
+}
+
+RDL.startSaveDocLoader = function (loadingText) {
+    var textNode = document.getElementsByClassName("progress-text")[0];
+    if (typeof loadingText == "string" && textNode) {
+        textNode.innerText = loadingText;
+    } else {
+        textNode.innerText = "Saving...";
+    }
+    document.getElementById("saveDocLoader").classList.remove("d-none");
+}
+
+RDL.closeSaveDocLoader = function () {
+    // document.getElementsByClassName('progress_qb')[0].classList.add("d-none");
+    //  document.getElementById("saveDocLoader").classList.add("d-none");
+}
+RDL.closePageLoader = function () {
+    document.getElementById("page-loader").classList.add("invisible");
+}
+
+RDL.isMac = function () {
+    if (navigator.userAgent.match(/Mac OS/i))
+        return true;
+    else
+        return false;
+}
+
+RDL.setCountryDetails = function () {
+    RDL.callAjax(window.RDL.Paths.BaseApiUrl + 'user/countryclaims', "GET", true, true, function (data) {
+        if (data) {
+            RDL.countryDetails = JSON.parse(data);
+        }
+    });
+}
+
+RDL.callAjaxTestBed = function (url, method, async, withCredentials, callback, resolve, data) {
+    var xmlhttp;
+    // compatible with IE7+, Firefox, Chrome, Opera, Safari
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.onload = function () {
+        if (xmlhttp.readyState == 4 && (xmlhttp.status == 200 || xmlhttp.status == 404)) {
+            if (callback)
+                if (resolve) {
+                    callback(xmlhttp.responseText, resolve);
+                }
+                else {
+                    callback(xmlhttp);
+                }
+        }
+    }
+    xmlhttp.open(method, url, async);
+    if (withCredentials)
+        xmlhttp.withCredentials = true;
+
+    if (data) {
+        xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xmlhttp.send(data);
+    }
+    else {
+        xmlhttp.send();
+    }
+}
+RDL.renderIEskins = function(e){
+    if(document.querySelector(".ie.ie11") && !RDL.isINTL && document.querySelectorAll("#static").length > 0){
+        [].forEach.call(document.querySelectorAll("#static"), function (elem) {
+            elem.innerHTML = elem.innerText.replace(/\/\*update\*\//g," ") + "/*update*/";
+        });
+        [].forEach.call(document.querySelectorAll("#dynamic"), function (elem) {
+            elem.innerHTML = elem.innerText.replace(/\/\*update\*\//g," ") + "/*update*/";
+        });
+    }
+}
+RDL.loadNativeLocalization = function (localizationUrl){
+    // localizationUrl = localizationUrl.replace('/'+RDL.countryDetails.countryCode.toLowerCase(),'');
+    return new Promise(function(resolve,reject){
+        RDL.callAjax(localizationUrl, 'GET', true, false, function(result){
+            var data = JSON.parse(result);
+            if(!data.localizedtext){
+                data = JSON.parse(data);
+            }
+            window.RDL.nativeLocalization = data.localizedtext;
+            if(RDL.nativeLocalization.cultureCd){
+                RDL.cultureCD = RDL.nativeLocalization.cultureCd;
+            }
+            if(RDL.nativeLocalization.acceptLanguage){
+                RDL.acceptLanguage = RDL.nativeLocalization.acceptLanguage;
+            }
+            resolve();
+        },resolve,null,true);
+    });
+}
+
+RDL.swapLocalization = function () {
+            for(var key in RDL.nativeLocalization){
+                RDL.Localization[key] = RDL.nativeLocalization[key]
+            }
+            RDL.initializeRendererLocalization();
+        if(RDL.countryDetails.countryCode.toLowerCase() == 'ca') window.RDL.isCALocalization = true; 
+}
+
+RDL.conductLocalizationExperiment = function () {
+    return  new Promise(function (resolve, reject) {
+		if (RDL.Portal.localizationFeature || RDL.Portal.portalCd == "cln") {
+			if(availableCountryCDs.indexOf(RDL.countryDetails.countryCode.toLowerCase()) > -1){
+				RDL.swapLocalization();				
+			}
+        }
+        resolve();
+    });
+}
+
+RDL.getExperimentUrl = function (experimentId, userId){
+    return window.RDL.Paths.BaseApiUrlV2 + 'users/' + userId+ '/experiments/' +experimentId +'/conduct'; 
+}
+
+RDL.getExperimentUrlForVisitor=function (experimentId,visitorID){
+    return window.RDL.Paths.BaseApiUrl + 'visitors/' + visitorID+ '/experiments/' +experimentId ; 
+}
+
+RDL.getExperimentUrlForVisitorConduct=function (experimentId,visitorID){
+    return window.RDL.Paths.BaseApiUrl + 'visitors/' + visitorID+ '/experiments/' +experimentId+"/conduct" ; 
+}
+RDL.getVarientOfExperimentByVisitor=function(visitorID,experimentId){
+    
+    var url = RDL.getExperimentUrlForVisitor(experimentId, visitorID);
+    return new Promise(function(resolve,reject){
+        RDL.callAjax(url, "GET", true, true, function (data) {  
+            if(data){
+                data= JSON.parse(data);
+            }          
+            resolve(data);
+        },null,null,null,true);
+    }).then(function(resp){
+        return resp;
+    }).catch(function(err){
+        return null;
+    });
+
+}
+
+RDL.conductVisitorExperiment = function (visitorID, experimentId){
+    var url = RDL.getExperimentUrlForVisitorConduct(experimentId, visitorID);
+    var postObj = {
+        logTraits: false,
+        conductForOldUsers: false,
+        includeIterableIntegration: false,
+        culture: "en-US",
+        skipGoverning: true
+    }
+    return new Promise(function(resolve,reject){
+        RDL.callAjax(url, "POST", true, true, function (data) {  
+            if(data){
+                data= JSON.parse(data);
+            }          
+            resolve(data);
+        },resolve,JSON.stringify(postObj),null,true);
+    }).then(function(resp){
+        return resp;
+    }).catch(function(err){
+        return null;
+    });
+}
+
+RDL.conductExperiment = function (experimentId, userId){
+    var url = RDL.getExperimentUrl(experimentId, userId);
+    var postObj = {
+        logTraits: false,
+        conductForOldUsers: false,
+        includeIterableIntegration: false,
+        culture: "en-US",
+        skipGoverning: true
+    }
+    return new Promise(function(resolve,reject){
+        RDL.callAjax(url, "POST", true, true, function (data) {  
+            if(data){
+                data= JSON.parse(data);
+            }          
+            resolve(data);
+        },resolve,JSON.stringify(postObj),null,true);
+    }).then(function(resp){
+        return resp;
+    }).catch(function(err){
+        return null;
+    });
+}
+
+RDL.getTemplateFromSkin = function (skin) {
+    var skinCD = skin || (RDL.selectedSkin || RDL.defaultSkin);
+    var template = RDL.files[skinCD + '.htm'];
+    if (!template) {
+        RDL.getSkinHtml(skinCD + '.htm', false);
+        template = RDL.files[skinCD + '.htm'];
+        if (!template) {
+            template = RDL.files[RDL.defaultSkin + '.htm'];
+        }
+    }
+    return template;
+}
+RDL.isMultiColumnSkin = function (skinCD) {
+    skinCD = skinCD || (RDL.selectedSkin || RDL.defaultSkin);
+    var skin = RDL.Skins.find(function (x) { return x.id == skinCD });
+    if(!skin){
+        skin = RDL.oldSkins.find(function (x) { return x.skinCD == skinCD });
+    }
+    return skin && skin.isMultiColumn ? true : false;
+}
+window.termConditions = function (event) {
+    event.preventDefault();
+    if (window.RDL.isINTL) {
+        if (RDL.isLiteBuilder) {
+            window.open((RDL.liteFlowRootURLCultureSlug?'/' + RDL.liteFlowRootURLCultureSlug : '') + RDL.Localization.url_terms);
+        }
+        else {
+            window.open('/information/termsofuse.aspx');
+        }  
+    }
+    else
+    {
+        window.open('/terms-of-use');
+    }
+}
+window.privacyPolicy = function (event) {
+    event.preventDefault();
+    if (window.RDL.isINTL) {
+        if (RDL.isLiteBuilder) {
+            window.open((RDL.liteFlowRootURLCultureSlug?'/' + RDL.liteFlowRootURLCultureSlug : '') + RDL.Localization.url_privacy);
+        }
+        else {
+            window.open('/information/privacy.aspx');
+        }
+        
+    }
+    else
+    {
+        window.open('/privacy-policy');
+    }
+}
+RDL.getGAClientId = function () {
+    var clientId = "";
+    if (typeof ga != "undefined") {
+        window.ga && ga(function (tracker) {
+            clientId = tracker.get('clientId');
+        });
+    }
+    return clientId;
+}
+
+RDL.createOrUpdateRuntestCookie = function (experimentID,variant) {
+    if(RDL.runTestCookie){
+        var isExperimentExist = RDL.runTestCookie.indexOf(experimentID + '_') > -1;
+        if(!isExperimentExist){
+            RDL.runTestCookie = RDL.runTestCookie+','+experimentID+'_'+variant;
+            RDL.createCookie("runtest", RDL.runTestCookie);
+        }
+    }
+    else{
+        RDL.runTestCookie =  experimentID+'_'+variant;
+        RDL.createCookie("runtest", RDL.runTestCookie);
+    }
+}
+RDL.getExperimentVariantFromCookie = function (experimentID) {
+    var variant=0;
+    var runtestCookie=RDL.readCookie("runtest");
+    if(runtestCookie)
+    {
+        var experiment = runtestCookie.split(',').filter(function (i) {
+            return i.indexOf(experimentID + '_') != -1;
+          });
+        if(experiment && experiment.length>0)
+        {
+            var varaitnDetails=experiment[0].split('_');
+            if(varaitnDetails.length==2)
+                variant=experiment[0].split('_')[1];
+        }
+    }
+    return variant;
+}
+
+if(!RDL.isINTL || RDL.Portal.loadClientExperimentJS){
+    RDL.loadJs(RDL.getClientExperimentJSPath());
+}
+
+RDL.conductSPAExperiment = function(userId,experimentObj,dontFireTraits){
+    var variant = 0;
+    if(!window.RDL.UserClaims){
+        return ;
+    }
+    var isLoggedIn = window.RDL.UserClaims && window.RDL.UserClaims.role != "Guest" ? true : false;    
+    if(window.experiment && experimentObj.isActive){        
+        var userCreatedDate = new Date(RDL.UserClaims.createdOn);
+        if(RDL.isINTL && RDL.UserClaims.createdOn){
+            var dateParts = RDL.UserClaims.createdOn.split("/");
+            if(dateParts && dateParts.length >= 3){
+                var yearTime = dateParts[2].split(" ");
+                if(yearTime  && yearTime.length > 1){
+                    var userCreationTime = yearTime[1].split(":");
+                    if(userCreationTime && userCreationTime.length >= 3){
+                        userCreatedDate = new Date(Number(yearTime[0]), Number(dateParts[1]) - 1, Number(dateParts[0]),Number(userCreationTime[0]), Number(userCreationTime[1]), Number(userCreationTime[2]));
+                    } else {
+                        userCreatedDate = new Date(Number(yearTime[0]), Number(dateParts[1]) - 1, Number(dateParts[0]));
+                    }
+                }
+                else{
+                    userCreatedDate = new Date(Number(yearTime[0]), Number(dateParts[1]) - 1, Number(dateParts[0]));
+                }
+            }
+        }
+        if(experimentObj.conductForGuestUsers && isLoggedIn){
+            RDL[experimentObj.rdlKey] =variant;
+            return;
+        }
+        var expStartDate = window.experiment.getExperimentStartDate(experimentObj.experimentId).startDate; 
+        if((!experimentObj.conductForOldUsers && (userCreatedDate != "Invalid Date") && (expStartDate && userCreatedDate < expStartDate))){
+            RDL[experimentObj.rdlKey] =variant;
+            return;
+        }
+
+        variant = window.experiment.conductUserExperiment(userId, RDL.layerId, experimentObj.experimentId).variant || 0;
+        RDL[experimentObj.rdlKey] = variant;
+        if(variant>0){
+        RDL.createOrUpdateRuntestCookie(experimentObj.experimentId,variant);        
+        }        
+        var expKey = "Experiment: " + window.experiment.getExperimentName(experimentObj.experimentId).experimentName
+        if(experimentObj.addExtraSpaceInTraits){
+            expKey = "Experiment : " + window.experiment.getExperimentName(experimentObj.experimentId).experimentName
+        }
+        var expObj = {}
+        expObj[expKey] = window.experiment.getVariantName(experimentObj.experimentId, variant).variantName;           
+        if(dontFireTraits){   
+            experimentTraits = experimentTraits == null ? {} :experimentTraits; 
+            experimentTraits = Object.assign({}, experimentTraits , expObj);                      
+        }
+        else if(variant>0){
+            window.RDL.TrackEvents("identify",expObj,userId,isLoggedIn);   
+        }
+    }
+}
+
+RDL.GetUserAllExperimentsV3 = function(userId){
+    var url = window.RDL.Paths.BaseApiUrlV3 + 'users/' + userId + '/experiments?portalCd=' + RDL.PortalSettings.ConfigurePortalCd + '&status=active';    
+    return new Promise(function(resolve,reject){
+        RDL.callAjax(url, "GET", true, true, function (data) {  
+            if(data){
+                data= JSON.parse(data);
+            }          
+            resolve(data);
+        },null,null,null,true);
+    }).then(function(resp){
+        return resp;
+    }).catch(function(err){
+        return null;
+    });    
+}
+ 
+var dvFinished = document.getElementById("dvFinished");
+dvFinished.addEventListener("webkitAnimationEnd", RDL.animationFinished);
+dvFinished.addEventListener("animationend", RDL.animationFinished);
+
+if (!String.prototype.startsWith) {
+    String.prototype.startsWith = function (searchString, position) {
+        position = position || 0;
+        return this.indexOf(searchString, position) === position;
+    };
+}
+String.prototype.insert = function (index, string) {
+    if (index > 0)
+        return this.substring(0, index) + string + this.substring(index, this.length);
+    else
+        return string + this;
+};
+
+/**** css class accroding to browser ****/
+var $html = document.getElementsByTagName('html')[0];
+var userAgent = navigator.userAgent;
+window.isIE = /*@cc_on!@*/false || !!document.documentMode;
+//window.isEdge = !window.isIE && !!window.StyleMedia;
+window.isEdge = userAgent.toLocaleLowerCase().indexOf('edg') > -1;
+window.isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor)||/CriOS/.test(navigator.userAgent);
+// isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification));
+// isiPad = /(iPad)/g.test(navigator.userAgent);
+// if (isiPad) $html.classList.add('ipad');
+if (/MSIE/.test(userAgent) || /Trident/.test(userAgent)) {
+    $html.classList.add('ie');
+    if (/MSIE 10\.0/.test(userAgent)) $html.classList.add('ie10');
+    if (/rv:11\.0/.test(userAgent)) $html.classList.add('ie11');
+}
+// if (/iPad/.test(userAgent)) {
+//    $html.classList.add('ipad');
+// }
+if (window.isEdge) {
+    $html.classList.add('edge');
+}
+if (window.isChrome) {
+    $html.classList.add('chrome');
+}
+
+// Add Browser/Device specific classes
+var userAgent = navigator.userAgent.toLowerCase();
+window.isIE = /*@cc_on!@*/false || !!document.documentMode;
+//window.isEdge = !isIE && !!window.StyleMedia;
+window.isEdge = userAgent.indexOf('edg') > -1;
+if (/MSIE/.test(userAgent) || /Trident/.test(userAgent)) {
+    $html.classList.add('ie');
+    if (/MSIE 10\.0/.test(userAgent)) $html.classList.add('ie10');
+    if (/rv:11\.0/.test(userAgent)) $html.classList.add('ie11');
+}
+if (/firefox/.test(userAgent)) {
+    $html.classList.add('firefox');
+}
+
+if (!/safar/.test(userAgent) && /chrome/.test(userAgent)) {
+    $html.classList.add('safari');
+}
+
+if (/iPad/.test(userAgent)) {
+    $html.classList.add('ipad');
+}
+
+if (window.isEdge) {
+    $html.classList.add('edge');
+}
+
+if (typeof Object.assign != 'function') {
+    // Must be writable: true, enumerable: false, configurable: true
+    Object.defineProperty(Object, "assign", {
+        value: function assign(target, varArgs) { // .length of function is 2
+            'use strict';
+            if (target == null) { // TypeError if undefined or null
+                throw new TypeError('Cannot convert undefined or null to object');
+            }
+
+            var to = Object(target);
+
+            for (var index = 1; index < arguments.length; index++) {
+                var nextSource = arguments[index];
+
+                if (nextSource != null) { // Skip over if undefined or null
+                    for (var nextKey in nextSource) {
+                        // Avoid bugs when hasOwnProperty is shadowed
+                        if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                            to[nextKey] = nextSource[nextKey];
+                        }
+                    }
+                }
+            }
+            return to;
+        },
+        writable: true,
+        configurable: true
+    });
+}
+
+RDL.isDisableTest = RDL.readCookie('disabletests') == 1;
+if (RDL.isDisableTest == null && window.RDL.GetQueryString('disabletests') && window.RDL.GetQueryString('disabletests') > 0) {
+    RDL.isDisableTest = true;
+}
+
+RDL.sectionCodeMapping = {
+    'HILT': 'Skills',
+    'CNTC': 'Contact',
+    'SUMM': 'Summary',
+    'EDUC': 'Education and Training',
+    'EXPR': 'Experience'
+}
+
+sessionStorage.removeItem("isAutoSave");
+RDL.ActivateGOneTap = function(callback){
+        var gTapJs = 'https://accounts.google.com/gsi/client';
+        RDL.loadJs(gTapJs);
+        window.handleCredentialResponse = function (response) {
+            RDL.startPageLoader();
+            var LOGIN = window.LOGIN || window.BOLD;
+            LOGIN.Accounts.loginGoogleToken(response.credential, window.location.href, "RSM", "Resumes", null, null, null, 1).then(function (res) {
+                    if(res){
+                        if(RDL.GoogleOneTapv2 == 3){
+                            RDL.handleClaims(JSON.stringify(res.claims));
+                            RDL.contactComp.googleOneTapAction(res);
+                        }
+                        if(RDL.GoogleOneTapv3 == 3){
+                            if(callback);
+                                callback(res);
+                        }
+                    } 
+                 });
+         };
+         var googleOneTapDiv = document.createElement('div');
+         googleOneTapDiv.innerHTML='<div id="g_id_onload"'+
+             'data-client_id="201279388257-r9cfb4ajnf0o6e2m7glodmt2guktekb6.apps.googleusercontent.com"'+
+             'data-callback="handleCredentialResponse" data-context="signup" data-cancel_on_tap_outside="false">'+
+         '</div>';
+        document.getElementById('containerHIW').appendChild(googleOneTapDiv);
+}
+
+RDL.formatEllipse= function(seeMoreCallback){    
+    if(window.jQuery){
+        $('.para-info').each(function(index,item){
+            var paraId = item.getAttribute("para-id");
+            var skip = RDL.seeMoreOnWorkHistory && RDL.seeMoreList.indexOf(paraId) !== -1;
+            if(!skip) {
+                var selector=item.firstChild;
+                var divh=$(item).height();
+                var htmlData=[];
+                var htmlText=[]
+                var htmlcontent="";
+                $(selector).html(function(index,text){
+                    text = text.replace(/<ul>|<\/ul>/g, "");
+                    text = text.replace(/<strong>/g,"@@boldOpen");
+                    text = text.replace(/<\/strong>/g,"@@boldClose");
+                    text = text.replace(/<em>/g,"@@italicOpen");
+                    text = text.replace(/<\/em>/g,"@@italicClose");
+                    text = text.replace(/<u>/g,"@@underlineOpen");
+                    text = text.replace(/<\/u>/g,"@@underlineClose");
+                    if(RDL.placeholderToolTip) {
+                        text = text.replace(/<span class="ttc_token" style="color:#2e2e2e; background-color: #daeeec;">/g,"@@spanOpen1");
+                    }
+                    else{
+                        text = text.replace(/<span class="ttc_token" style="color:#e86030">/g,"@@spanOpen");
+                    }                
+                    text = text.replace(/<\/span>/g,"@@spanClose");
+                    return text
+                })
+                while ($(selector).outerHeight()>divh) {
+                    htmlData=[];
+                    htmlText=[]
+                    htmlcontent="";
+                    $(selector).html(function (index, text) {
+                        return text.replace(/\n/g,"").replace(/<\/li>/g, "<\/li>\n").replace(/<\/p>/g, "<\/p>\n");
+                    });
+                if(htmlData.length==0)
+                        $(selector).html(function(index,text){
+                        htmlData = text.trim().replace(/\n/g, "@@aa").split("@@aa");
+                        });
+                    $(selector).text(function (index, text) {
+                        htmlText=text.trim().replace(/\W*\s(\S)*$/, !RDL.seeMoreOnWorkHistory ? '...' : '<br/><a href=\'javascript:void(0)\' class=\'seeMoreLink\'>...see<span>.</span>more</a>').replace(/\n/g,"@@aa").split("@@aa");
+                        return text.trim().replace(/@@aa/g,"").replace(/\W*\s(\S)*$/, '...');
+                    });
+                    var tempArr=[];
+                    var index=0;
+                    if(htmlText.length > 6){
+                        htmlText = htmlText.slice(0, 6);
+                    }
+                    for(var i=0;i<htmlText.length; i++){
+                        if(!htmlData[i])
+                            continue;
+                        var con=$(htmlData[i])[0];
+                        if(con){
+                            if(htmlText[i].trim() == '...'){
+                                con=$(htmlData[i-1])[0];
+                                con.innerHTML += '...';
+                                tempArr[index-1]=con.outerHTML;
+                            }
+                            else{
+                                con.innerHTML=htmlText[i];
+                                tempArr[index]=con.outerHTML;
+                                index++;
+                                //htmlcontent+=con.outerHTML+'@@aa';
+                            }
+                        }
+                    }
+                    htmlcontent = tempArr.join('\n');
+                    $(selector).html(function (index, text) {
+                        return htmlcontent;
+                    });
+                }
+                $(selector).html(function (index, text) {
+                    return  htmlcontent ? RDL.replaceContent(htmlcontent) :RDL.replaceContent(text)
+                });
+            }
+        });
+    }
+    if(RDL.seeMoreOnWorkHistory && seeMoreCallback) {
+        var seeMoreLinks = document.getElementsByClassName('seeMoreLink');
+        for(var i = 0; i < seeMoreLinks.length; i++) {
+            if(RDL.improveResumePreview){
+                seeMoreLinks[i].innerHTML = seeMoreLinks[i].innerHTML.replace('...','');
+                seeMoreLinks[i].innerHTML +=' ...';
+            }
+            seeMoreLinks[i].addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                seeMoreCallback(e);
+            });
+        }
+    }
+}
+RDL.replaceContent = function (htmlcontent) {
+    if(htmlcontent){        
+        var isliFound = false;
+        var dummyArr=htmlcontent.split('\n')||[];
+        if(dummyArr.length > 0){
+            for (var i = 0; i < dummyArr.length; i++) {
+                if (dummyArr[i].indexOf('<li>') > -1 && !isliFound) {
+                    isliFound = true;
+                    dummyArr[i] = '<ul>' + dummyArr[i];
+                }
+                if (dummyArr[i].indexOf('<li>') == -1 && isliFound) {
+                    dummyArr[i-1] = dummyArr[i-1] + '</ul>';
+                    isliFound = false;
+                }
+            }
+            if (isliFound && dummyArr.length > 0) {
+                dummyArr[dummyArr.length - 1] = dummyArr[dummyArr.length - 1] + '</ul>';
+            }
+            htmlcontent = dummyArr.join('\n');
+        }
+        htmlcontent = htmlcontent.replace(/@@aa/g, "\n");
+        htmlcontent = htmlcontent.replace(/@@boldOpen/g, "<strong>");
+        htmlcontent = htmlcontent.replace(/@@boldClose/g, "</strong>");
+
+        htmlcontent = htmlcontent.replace(/@@italicOpen/g, "<em>");
+        htmlcontent = htmlcontent.replace(/@@italicClose/g, "</em>");
+
+        htmlcontent = htmlcontent.replace(/@@underlineOpen/g, "<u>");
+        htmlcontent = htmlcontent.replace(/@@underlineClose/g, "</u>");
+        if(RDL.placeholderToolTip) {
+            htmlcontent = htmlcontent.replace(/@@spanOpen1/g, '<span class="ttc_token" style="color:#2e2e2e; background-color: #daeeec;">');
+        }
+        else{
+            htmlcontent = htmlcontent.replace(/@@spanOpen/g, '<span class="ttc_token" style="color:#e86030">');
+        }
+        htmlcontent = htmlcontent.replace(/@@spanClose/g, "</span>");
+    }
+    return htmlcontent;
+}
+
+RDL.prefetchFiles= function(src) {
+    var s, r, t;
+    r = false;
+    s = document.createElement('link');
+    s.rel = "prefetch";
+    s.href = src;
+    t = document.getElementsByTagName('link')[0];
+    t.parentNode.insertBefore(s, t);
+}
+
+RDL.prefetchFiles('https://accounts.google.com/gsi/client');
+
+
+RDL.getIndustryContentBlobUrl = function () {
+    return window.RDL.Paths.ResourcePath + 'resumecontent/';
+}
+
+RDL.deleteAllCookies=function() {
+    var cookies = document.cookie.split(";");
+    for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i];
+        var eqPos = cookie.indexOf("=");
+        var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    }
+};
+
+RDL.getSVG = function(url){   
+    var svgNode = RDL[url];
+    if(svgNode){
+        return svgNode;
+    }
+    RDL.callAjax(url, 'GET', false, false, function (data) {
+        var parser = new DOMParser();
+        var svgDoc = parser.parseFromString(data, "image/svg+xml");
+        var svgNode = svgDoc.querySelector("svg");
+        RDL[url] = svgNode;
+    });
+    svgNode = RDL[url];
+    return svgNode;
+}
+
+RDL.processLocalization = function(){    
+    var ipArray = RDL.localizationItems;
+    var itemsLength = ipArray ? ipArray.length : 0 ;
+    RDL.orgLocalizationItems = {};
+    for(var i=0;i<itemsLength;i++){
+        var item = ipArray[i];
+        if(RDL[item]) {
+            RDL.orgLocalizationItems[item] = JSON.parse(JSON.stringify(RDL[item]));
+            RDL.enableLocalizationWithRecursion && RDL.handleLocalizationWithRecursion(RDL[item]);
+            RDL.Localization[item] = RDL[item];
+        } 
+    }
+
+    if(RDL.shortMonth){
+        window.RDL.Localization.shortMonth  = RDL.shortMonth;
+    }
+
+    for(var j=0;j<RDL.localizeArrays.length;j++){
+        var arrayItem = RDL.localizeArrays[j];
+        if(RDL.Localization[arrayItem]){
+            RDL.Localization[arrayItem] = RDL.Localization[arrayItem].split(",");
+        }
+    }
+    if(RDL.isLiteBuilder){
+        RDL.elligibleLanguages = RDL.updateElligibleLanguagesLabel(RDL.elligibleLanguages, RDL.Localization);
+    }
+}
+
+RDL.handleLocalizationWithRecursion = function(obj){   
+    
+    if(Array.isArray(obj)){
+        obj.forEach(function (key, index) {
+            RDL.handleLocalizationWithRecursion(key)
+        });        
+    }
+    else if(typeof(obj) == "object"){
+        for(var key in obj){
+            var item = obj[key];
+            var typeValue = typeof(item);
+    
+            if(typeValue == "object"){
+                RDL.handleLocalizationWithRecursion(item);
+            }
+            else if(typeValue == "string" && item.startsWith("lkl_")){
+                obj[key] = RDL.Localization[item];
+            }    
+        }
+    }  
+}
+
+RDL.getLocaleAlongWithCountry = function (cultureCD) {
+    var localeLite = cultureCD;
+    if (localeLite && RDL.countrySlug) {
+        localeLite = localeLite.split('-')[0];
+        localeLite = localeLite.toLowerCase() + '-' + RDL.countrySlug.toUpperCase();
+    }
+    return localeLite;
+}
+
+RDL.getLocalizedURL = function(){
+    window.RDL.Paths.BaseUrl = RDL.urlLocalizationMapping(window.RDL.Paths.BaseUrl);
+   // window.RDL.Paths.SellPageUrl = RDL.urlLocalizationMapping(window.RDL.Paths.SellPageUrl);
+    window.RDL.Paths.signInURL = RDL.urlLocalizationMapping(window.RDL.Paths.signInURL);
+   
+   // Keys can be appended
+   // "url_documenthome": "documenthome",
+   // "url_payment":"payment",
+   // "url_index": "index",
+   // "url_signin": "signin"
+}
+
+RDL.urlLocalizationMapping = function (url) {
+    if (url) {
+        var urlArray = url.split('?');
+        if(urlArray){
+            urlArray = urlArray[0].split('/');
+        }
+        urlArray.map(function (item) {
+            if (window.RDL.Localization['url_' + item]) {
+                url = url.replace('/' + item, '/' + window.RDL.Localization['url_' + item])
+            }
+        });
+    }
+    return url;
+}
+
+RDL.getExperimentObject = function(){   
+    var environment = window.location.host.split('.')[0];
+    var configName =  "dev"; 
+    switch (environment) {
+        case "reg":
+        case "regression":
+        case "pen":            
+            configName = "reg";
+            break;
+        case "loc":
+            configName = "reg";
+            break;
+        case "stg":
+            configName = "stg";
+            break;
+        case "perf":
+            configName = "perf";
+            break;
+        case "www":
+            configName = "prod";
+            break;
+    }
+    var experimentBlob = window.RDL.Paths.ResourcePath + 'experimentContent/'+configName+'/experimentContent.json';
+    
+    if(RDL.isLiteBuilder){
+      var baseUrl = window.RDL.Paths.ResourcePath;
+        baseUrl = baseUrl.replace('/' + RDL.PortalSettings.ConfigurePortalCd.toLowerCase() + '/','/lclite/experimentContent/'+RDL.PortalSettings.ConfigurePortalCd.toLowerCase()+"/");
+        experimentBlob=baseUrl+ configName +"/experimentContent.json";
+    }
+    RDL.callAjax(experimentBlob, 'GET', false, false, function(data){
+        if(data){
+            var dataobj = JSON.parse(data);
+             if(RDL.isLiteBuilder){
+               
+                if(Object.prototype.hasOwnProperty.call(dataobj,RDL.liteFlowCultureCD)){
+                    dataobj = Object.assign({},dataobj[RDL.liteFlowCultureCD])
+                 }else{
+                    dataobj = Object.assign({},dataobj["en"])
+                 }
+
+                
+            }
+            RDL.experimentContent = dataobj;     
+        }
+    });
+}
+
+RDL.setUserCountryCD = function(userId) {
+    return new Promise(function(resolve, reject) {
+        if(!RDL.isINTL) {
+            var url = window.RDL.Paths.BaseApiUrl + 'users/' + RDL.UserClaims.user_uid;
+            RDL.callAjax(url, "GET", true, true, function(data) {
+                if(data) {
+                    RDL.userCountryCD = JSON.parse(data).country_cd;
+                }
+                RDL.userCountryCD = RDL.userCountryCD || '';
+                resolve();
+            });
+        } else {
+            resolve();
+        }
+    });
+}
+
+RDL.getCountryData = function () {
+    return new Promise(function (resolve, reject) {
+        RDL.callAjax(window.RDL.Paths.BaseApiUrl + '/country/countrylist', "GET", true, true, function (data) {
+            if (data) {
+                var countryData=JSON.parse(data);
+                RDL.countryArr = countryData.map(function (ct) {
+                    return {
+                        label: ct.countryName,
+                        value: ct.countryCD,
+                        continentName: ct.continentName,
+                        continentCD: ct.continentCD
+                    }
+                });
+                RDL.countryArr.sort(function (a, b) {
+                    if (a.label > b.label) return 1;
+                    else if (a.label < b.label) return -1;
+                    else return 0;
+                })
+            }
+            resolve();
+        });
+    });
+}
+
+RDL.setcookieConsentDatainLocalStorage = function(){
+    var cookieConsent = RDL.GetQueryString("COOKIE_CONSENT");
+    if(cookieConsent){
+        cookieConsent = decodeURIComponent(cookieConsent);
+        cookieConsent = JSON.parse(cookieConsent);
+        localStorage.setItem("COOKIE_CONSENT",cookieConsent);
+    }
+}
+
+window.logTTCResponse= function(req,resp){
+    if(RDL.enableLoggingForTTC){
+        var payload=req.split('&')||[];
+        var sectionTypeCd = '';
+        var Jobtitle = '';
+        var curatedSkillVariance='';
+        var isPoolParty=false;
+        payload.shift();
+        if(payload){
+            var param = payload.find(function(x){return x.includes('sectionTypeCD')});
+            if(param){
+                sectionTypeCd = param.split('=')[1];
+            }
+            param = payload.find(function(x){return x.includes('Jobtitle=')});
+            if(param){
+                Jobtitle = param.split('=')[1];
+            }
+            param = payload.find(function(x){return x.includes('curatedSkillVariance=')});
+            if(param){
+                curatedSkillVariance = param.split('=')[1];
+            }
+            param = payload.find(function(x){return x.includes('isPoolParty=')});
+            if(param){
+                isPoolParty= param.split('=')[1];
+            }
+        }
+        var postObj = {        
+            request: req,
+            response: JSON.stringify(resp),
+            userId:RDL.UserClaims.user_uid,
+            count: (resp && resp.length)||0,
+            sectionTypeCd:sectionTypeCd,
+            payload: JSON.stringify(payload),
+            jobtitle:Jobtitle,
+            curatedSkillVariance:curatedSkillVariance,
+            isPoolParty:isPoolParty
+
+        }
+        fetch(window.RDL.Paths.rootURL + window.RDL.Paths.BasePath +'/v1/api/logger/log', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(postObj)
+        }).catch(function (err) {
+            console.log(err);
+        });
+    }    
+}
+RDL.isADAChanges = !RDL.isINTL;
+
+RDL.cvUploadTest =function (){
+    var isCVUploadNewFlow = sessionStorage.getItem('isCVUploadNewFlow');
+    if(!isCVUploadNewFlow && RDL.GetQueryString('uploadflow') == "newflow"){
+        isCVUploadNewFlow = true;
+        sessionStorage.setItem('isCVUploadNewFlow', true);
+    }   
+    if(isCVUploadNewFlow){
+        RDL.cvUploadExpV2 = true;
+        document.querySelector('#howItWorks').classList.add('redesign-hiw');
+        document.querySelector('.hiwTitle') && document.querySelector('.hiwTitle').classList.add('d-none');
+        document.querySelector('.hiwTitleExp') && document.querySelector('.hiwTitleExp').classList.remove('d-none');
+        document.querySelector('.hiwStep1') && document.querySelector('.hiwStep1').classList.add('d-none');
+        document.querySelector('.hiwStep1Exp') && document.querySelector('.hiwStep1Exp').classList.remove('d-none');
+        document.querySelector('.hiwStep2') && document.querySelector('.hiwStep2').classList.add('d-none');
+        document.querySelector('.hiwStep2Exp') && document.querySelector('.hiwStep2Exp').classList.remove('d-none');
+        document.querySelector('.hiwStep3') && document.querySelector('.hiwStep3').classList.add('d-none');
+        document.querySelector('.hiwStep3Exp') && document.querySelector('.hiwStep3Exp').classList.remove('d-none');
+    }
+}
+
+RDL.uploadNewFLow = function () {
+
+    if (RDL.GetQueryString('uploadnewflow') == "true" || sessionStorage.getItem('uploadSelected') == '1') {
+        RDL.uploadNewFlow = true;
+        sessionStorage.setItem('uploadSelected', '1');
+        document.getElementById('howItWorks') && document.getElementById('howItWorks').classList.add('hiw-cv-upload');
+        document.querySelector('.hiw-step2') && document.querySelector('.hiw-step2').classList.add('d-none');
+        document.querySelector('.hiw-step2-exp') && document.querySelector('.hiw-step2-exp').classList.remove('d-none');
+        if(window.RDL.PortalSettings.ConfigurePortalCd.toUpperCase() == "LDE"){
+            RDL.toggleSelectCvBoxPosition = true;
+            document.getElementById('howItWorks') && document.getElementById('howItWorks').classList.remove('hiw-cv-upload');
+            document.getElementById('howItWorks') && document.getElementById('howItWorks').classList.add('redesign-hiw');
+            const stepsElements = document.querySelectorAll('.step-title');
+            if(stepsElements && stepsElements[0])
+                stepsElements[0].classList.add('d-none');
+            if(stepsElements && stepsElements[1])
+                stepsElements[1].classList.remove('d-none');
+        }
+    }
+}
+
+RDL.hiwCopyChanges = function(){
+    if(RDL.GetQueryString('hiwNewSkinExp')){
+        if(RDL.GetQueryString('hiwNewSkinExp') == 3){
+            document.getElementById('hiwTitle') && document.getElementById('hiwTitle').classList.add('d-none');
+            document.getElementById('hiwStep2') && document.getElementById('hiwStep2').classList.add('d-none');
+            document.getElementById('hiwStep3') && document.getElementById('hiwStep3').classList.add('d-none');
+            document.getElementById('btnGetStarted') && document.getElementById('btnGetStarted').classList.add('d-none');
+            document.getElementById('hiwTitleExp') && document.getElementById('hiwTitleExp').classList.remove('d-none');
+            document.getElementById('hiwStep2Exp') && document.getElementById('hiwStep2Exp').classList.remove('d-none');
+            document.getElementById('hiwStep3Exp') && document.getElementById('hiwStep3Exp').classList.remove('d-none');
+            document.getElementById('btnGetStartedExp') && document.getElementById('btnGetStartedExp').classList.remove('d-none'); 
+        }
+    }
+}
+
+RDL.isScriptAlreadyIncluded = function(src){
+    //PartyTown script check
+    var scripts = document.getElementsByTagName("iframe");
+    for(var i = 0; i < scripts.length; i++) 
+       if(scripts[i].getAttribute('src') && scripts[i].getAttribute('src').indexOf(src)>-1) return true;
+    return false;
+}
+RDL.appendQueryString = function (url) {
+    var appendedURL = "";
+    if (url && url.includes("?")) {
+      appendedURL = url + location.search.replace("?", "&");
+    }
+    else {
+      appendedURL = url + location.search;
+    }
+    var index = appendedURL.indexOf("?");
+    if (index > 0) {
+      var arr = appendedURL.substring(index + 1).split("&");
+      arr = arr.filter(function (elem, i) { return arr.indexOf(elem) === i });
+      appendedURL = appendedURL.substring(0, index) + "?" + arr.join("&");
+    }
+    return appendedURL;
+  }
