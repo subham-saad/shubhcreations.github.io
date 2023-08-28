@@ -6,6 +6,7 @@ import { styles } from "../styles";
 import { EarthCanvas } from "./canvas";
 import { SectionWrapper } from "../hoc";
 import { slideIn } from "../utils/motion";
+import linkdin from "../assets/company/linkedin-logo.png"
 
 
 
@@ -130,11 +131,13 @@ const Contact = () => {
           </button>
         </form>
       </motion.div>
-
+   
+      
       <motion.div
         variants={slideIn("right", "tween", 0.2, 1)}
         className='xl:flex-1 xl:h-auto md:h-[550px] h-[350px]'
       >
+    
         <EarthCanvas />
       </motion.div>
     </div>
