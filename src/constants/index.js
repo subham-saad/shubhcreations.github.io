@@ -23,7 +23,8 @@ import {
     jobit,
     tripguide,
     threejs,
-    ecoom
+    ecoom,
+    moviesearch
     // SocialTek,
     // waveaxis
   } from "../assets";
@@ -188,6 +189,24 @@ import {
   ];
   
   const projects = [
+    {
+      name: "Movie Search",
+      description:
+        "Web-based platform that allows users to search the movies.",
+      tags: [
+        {
+          name: "next",
+          color: "blue-text-gradient",
+        },
+        {
+          name: "tailwind",
+          color: "pink-text-gradient",
+        },
+      ],
+      image:  moviesearch,
+      source_code_link:"https://huntthecinema.netlify.app/",
+      
+    },
     {
       name: "Car Showcase",
       description:
