@@ -190,6 +190,24 @@ import {
   
   const projects = [
     {
+      name: "Say Happy Birthday",
+      description:
+        "Web-based platform for mobile UI view to sayhappbirth day .",
+      tags: [
+        {
+          name: "React-Vite",
+          color: "blue-text-gradient",
+        },
+        {
+          name: "tailwind",
+          color: "pink-text-gradient",
+        },
+      ],
+      image:  birthdaysong,
+      source_code_link:"https://sayhappbirthday.netlify.app/",
+      
+    },
+    {
       name: "Movie Search",
       description:
         "Web-based platform that allows users to search the movies.",
