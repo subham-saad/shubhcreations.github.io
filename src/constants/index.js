@@ -24,7 +24,8 @@ import {
     tripguide,
     threejs,
     ecoom,
-    moviesearch
+    moviesearch,
+    birthdaysong
     // SocialTek,
     // waveaxis
   } from "../assets";
