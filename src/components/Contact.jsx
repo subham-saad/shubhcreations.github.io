@@ -20,9 +20,7 @@ const Contact = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  //service_2lb3hhd
-  //template_t4tox4l
-  //keN1R_kqwD3ojRVZ8
+ 
   const handleChange = (e) => {
     const { target } = e;
     const { name, value } = target;
