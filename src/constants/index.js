@@ -25,7 +25,7 @@ import {
     threejs,
     ecoom,
     moviesearch,
-    birthdaysong
+    
     // SocialTek,
     // waveaxis
   } from "../assets";
@@ -204,7 +204,7 @@ import {
           color: "pink-text-gradient",
         },
       ],
-      image:  birthdaysong,
+      image:  creator,
       source_code_link:"https://sayhappbirthday.netlify.app/",
       
     },
