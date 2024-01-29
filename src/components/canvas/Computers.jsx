@@ -2,6 +2,7 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Preload, useGLTF } from "@react-three/drei";
+import { throttle } from 'lodash';
 
 import CanvasLoader from "../Loader";
 
@@ -58,26 +59,47 @@ const Computers = ({ isMobile }) => {
 const ComputersCanvas = () => {
   const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    // Add a listener for changes to the screen size
-    const mediaQuery = window.matchMedia("(max-width: 500px)");
+//   useEffect(() => {
+//     // Add a listener for changes to the screen size
+//     const mediaQuery = window.matchMedia("(max-width: 600px)");
 
-    // Set the initial value of the `isMobile` state variable
-    setIsMobile(mediaQuery.matches);
+//     // Set the initial value of the `isMobile` state variable
+//     setIsMobile(mediaQuery.matches);
 
-    // Define a callback function to handle changes to the media query
-    const handleMediaQueryChange = (event) => {
-      setIsMobile(event.matches);
-    };
+//     // Define a callback function to handle changes to the media query
+//     const handleMediaQueryChange = (event) => {
+//       setIsMobile(event.matches);
+//     };
 
-    // Add the callback function as a listener for changes to the media query
-    mediaQuery.addEventListener("change", handleMediaQueryChange);
+//     // Add the callback function as a listener for changes to the media query
+//     mediaQuery.addEventListener("change", handleMediaQueryChange);
 
-    // Remove the listener when the component is unmounted
-    return () => {
-      mediaQuery.removeEventListener("change", handleMediaQueryChange);
-    };
-  }, []);
+//     // Remove the listener when the component is unmounted
+//     return () => {
+//       mediaQuery.removeEventListener("change", handleMediaQueryChange);
+//     };
+//   }, []);
+useEffect(() => {
+  // Add a listener for changes to the screen size
+  const mediaQuery = window.matchMedia("(max-width: 500px)");
+
+  // Set the initial value of the `isMobile` state variable
+  setIsMobile(mediaQuery.matches);
+
+  // Define a throttled callback function to handle changes to the media query
+  const handleMediaQueryChangeThrottled = throttle((event) => {
+    setIsMobile(event.matches);
+  }, 200); // Adjust the throttle duration as needed (e.g., 200 milliseconds)
+
+  // Add the throttled callback function as a listener for changes to the media query
+  mediaQuery.addEventListener("change", handleMediaQueryChangeThrottled);
+
+  // Remove the listener when the component is unmounted
+  return () => {
+    mediaQuery.removeEventListener("change", handleMediaQueryChangeThrottled);
+  };
+}, []);
+
 
   return (
     <Canvas
