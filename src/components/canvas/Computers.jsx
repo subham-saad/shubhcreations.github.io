@@ -5,6 +5,30 @@ import { OrbitControls, Preload, useGLTF } from "@react-three/drei";
 
 import CanvasLoader from "../Loader";
 
+// const Computers = ({ isMobile }) => {
+//   const computer = useGLTF("./desktop_pc/scene.gltf");
+
+//   return (
+//     <mesh>
+//       <hemisphereLight intensity={0.15} groundColor='black' />
+//       <spotLight
+//         position={[-20, 50, 10]}
+//         angle={0.12}
+//         penumbra={1}
+//         intensity={1}
+//         castShadow
+//         shadow-mapSize={1024}
+//       />
+//       <pointLight intensity={1} />
+//       <primitive
+//         object={computer.scene}
+//         scale={isMobile ? 0.7 : 0.75}
+//         position={isMobile ? [0, -3, -2.2] : [0, -3.25, -1.5]}
+//         rotation={[-0.01, -0.2, -0.1]}
+//       />
+//     </mesh>
+//   );
+// };
 const Computers = ({ isMobile }) => {
   const computer = useGLTF("./desktop_pc/scene.gltf");
 
@@ -13,22 +37,23 @@ const Computers = ({ isMobile }) => {
       <hemisphereLight intensity={0.15} groundColor='black' />
       <spotLight
         position={[-20, 50, 10]}
-        angle={0.12}
+        angle={isMobile ? 0.3 : 0.12}  // Adjust light angle for mobile
         penumbra={1}
-        intensity={1}
+        intensity={isMobile ? 0.5 : 1}  // Adjust light intensity for mobile
         castShadow
-        shadow-mapSize={1024}
+        shadow-mapSize={isMobile ? 512 : 1024}  // Adjust shadow map size for mobile
       />
       <pointLight intensity={1} />
       <primitive
         object={computer.scene}
-        scale={isMobile ? 0.7 : 0.75}
+        scale={isMobile ? 0.5 : 0.75}  // Adjust scale for mobile
         position={isMobile ? [0, -3, -2.2] : [0, -3.25, -1.5]}
         rotation={[-0.01, -0.2, -0.1]}
       />
     </mesh>
   );
 };
+
 
 const ComputersCanvas = () => {
   const [isMobile, setIsMobile] = useState(false);
