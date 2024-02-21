@@ -32,12 +32,12 @@ import CanvasLoader from "../Loader";
 // };
 const Computers = ({ isMobile }) => {
   const computer = useGLTF("./desktop_pc/scene.gltf");
-
+  const my3d  = useGLTF("./my3d/my3d.gltf")
   return (
     <mesh>
       <hemisphereLight intensity={0.15} groundColor='black' />
       <spotLight
-        position={[-20, 50, 10]}
+        position={isMobile ? [-20, 60, 10] : [-20, 50, 10]}
         angle={isMobile ? 0.3 : 0.12}  // Adjust light angle for mobile
         penumbra={1}
         intensity={isMobile ? 0.5 : 1}  // Adjust light intensity for mobile
@@ -46,10 +46,10 @@ const Computers = ({ isMobile }) => {
       />
       <pointLight intensity={1} />
       <primitive
-        object={computer.scene}
+        object={isMobile ? my3d.scene : computer.scene}
         scale={isMobile ? 0.5 : 0.75}  // Adjust scale for mobile
-        position={isMobile ? [0, -3, -2.2] : [0, -3.25, -1.5]}
-        rotation={[-0.01, -0.2, -0.1]}
+        position={isMobile ? [0, -2, -2] : [0, -3.25, -1.5]}
+        rotation={isMobile ?[-0.02, -0.2, -0.1]:[-0.01, -0.2, -0.1]}
       />
     </mesh>
   );
