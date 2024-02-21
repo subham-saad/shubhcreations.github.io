@@ -42,13 +42,13 @@ const Navbar = () => {
             window.scrollTo(0, 0);
           }}
         >
-         <div className="flex space-x-4 m-2">
-         <span className=" rounded-[50%] p-2 bg-black hidden sm:block">
-            <img src="myimg.jpeg" alt="myphoto" height={25} width={50} className=" rounded-[50%] p-0" />
+         <div className="flex items-center space-x-2 m-0">
+         <span className=" rounded-[50%] p-2 ">
+            <img src="myimg.jpeg" alt="myphoto" height={50} width={80} className=" rounded-[90%] p-2" />
           </span>
-          <p className='text-white text-[18px]  p-5 font-bold cursor-pointer flex '>
-            Shubham &nbsp;
-            <span className=''> | Creations</span>
+          <p className='text-white text-[12px] sm:text-[18px]  p-2  font-bold cursor-pointer flex '>
+            Shubham | Creations
+          
           </p>
         
           </div>
