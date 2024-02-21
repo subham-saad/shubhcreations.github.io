@@ -42,11 +42,16 @@ const Navbar = () => {
             window.scrollTo(0, 0);
           }}
         >
-         
-          <p className='text-white text-[18px] font-bold cursor-pointer flex '>
+         <div className="flex space-x-4 m-2">
+         <span className=" rounded-[50%] p-2 bg-black hidden sm:block">
+            <img src="myimg.jpeg" alt="myphoto" height={25} width={50} className=" rounded-[50%] p-0" />
+          </span>
+          <p className='text-white text-[18px]  p-5 font-bold cursor-pointer flex '>
             Shubham &nbsp;
             <span className=''> | Creations</span>
           </p>
+        
+          </div>
         </Link>
 
         <ul className='list-none hidden sm:flex flex-row gap-10'>
