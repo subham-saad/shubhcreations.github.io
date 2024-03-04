@@ -22,7 +22,7 @@ const Hero = () => {
             </p>
            </div>
         </div>
-        <ComputersCanvas />
+        <ComputersCanvas  className="sm:block hidden"/> 
 
         <div className="absolute xs:bottom-10 bottom-32 w-full flex justify-center
             items-start p-2 ">

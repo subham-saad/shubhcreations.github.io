@@ -10,6 +10,7 @@ import linkdin from "../assets/company/linkedin-logo.png"
 
 
 
+const resumeUrl = '../public/ShubhamResums.pdf'
 
 const Contact = () => {
   const formRef = useRef();
@@ -30,6 +31,12 @@ const Contact = () => {
       [name]: value,
     });
   };
+
+  
+const handleDownload = () => {
+ 
+  window.open(resumeUrl, '_blank');
+};
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -77,10 +84,10 @@ const Contact = () => {
         variants={slideIn("left", "tween", 0.2, 1)}
         className='flex-[0.75] bg-black-100 p-8 rounded-2xl'
       >
-       
+  
         <p className={styles.sectionSubText}>Get in touch</p>
         <h3 className={styles.sectionHeadText}>Contact.</h3>
-
+        <button className='bg-tertiary py-3 px-3 my-3 rounded-xl outline-none w-fit text-white font-bold shadow-md shadow-primary hover:bottom-10' onClick={handleDownload}>Download Resume</button>
         <form
           ref={formRef}
           onSubmit={handleSubmit}
@@ -126,7 +133,9 @@ const Contact = () => {
           >
             {loading ? "Sending..." : "Send"}
           </button>
+
         </form>
+
       </motion.div>
    
       

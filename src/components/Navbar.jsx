@@ -44,7 +44,7 @@ const Navbar = () => {
         >
          <div className="flex items-center space-x-2 m-0">
          <span className=" rounded-[50%] p-2 ">
-            <img src="myimg.jpeg" alt="myphoto" height={50} width={80} className=" rounded-[90%] p-2" />
+            <img src="myimg.jpeg" alt="myphoto"  height={50} width={80} className=" opacity-[0.9] rounded-[90%] p-2" />
           </span>
           <p className='text-white text-[12px] sm:text-[20px]  p-2  font-bold cursor-pointer flex '>
             Shubham | Creations
