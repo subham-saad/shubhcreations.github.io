@@ -25,7 +25,7 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const resumeUrl = '../public/ShubhamResums.pdf'
+  const resumeUrl = '/ShubhamResums.pdf'
     
 const handleDownload = () => {
  
