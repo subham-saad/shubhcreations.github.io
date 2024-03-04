@@ -25,6 +25,14 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const resumeUrl = '../public/ShubhamResums.pdf'
+    
+const handleDownload = () => {
+ 
+  window.open(resumeUrl, '_blank');
+};
+
+
   return (
     <nav
       className={`${
@@ -53,7 +61,7 @@ const Navbar = () => {
         
           </div>
         </Link>
-
+        <button className='bg-tertiary py-3 px-3 my-3 rounded-xl outline-none w-fit text-white font-bold shadow-md sm:block hidden shadow-primary hover:bottom-10' onClick={handleDownload}>Download Resume</button>
         <ul className='list-none hidden sm:flex flex-row gap-10'>
           {navLinks.map((nav) => (
             <li
