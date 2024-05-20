@@ -25,6 +25,7 @@ import {
     threejs,
     ecoom,
     moviesearch,
+    remodel
     
     // SocialTek,
     // waveaxis
@@ -190,6 +191,24 @@ import {
   ];
   
   const projects = [
+    {
+      name: "495 Remodeling",
+      description:
+        "A web App for remodeling small busniess in USA .",
+      tags: [
+        {
+          name: "React-Vite",
+          color: "blue-text-gradient",
+        },
+        {
+          name: "tailwind",
+          color: "pink-text-gradient",
+        },
+      ],
+      image:  remodel,
+      source_code_link:"https://495remodeling.com/",
+      
+    },
     {
       name: "Say Happy Birthday",
       description:

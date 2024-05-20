@@ -31,6 +31,7 @@ import jobit from "./jobit.png";
 import tripguide from "./tripguide.png";
 import ecoom from "./ecoom.jpg";
 import moviesearch from "./moviesearch.png";
+import remodel from "./remodel.png"
 
 export {
   logo,
@@ -62,5 +63,6 @@ export {
   jobit,
   tripguide,
   ecoom,
-  moviesearch
+  moviesearch,
+  remodel
 };
