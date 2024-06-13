@@ -32,7 +32,7 @@ import CanvasLoader from "../Loader";
 // };
 const Computers = ({ isMobile }) => {
   const computer = useGLTF("./desktop_pc/scene.gltf");
-  const my3d  = useGLTF("./my3d/my3d.gltf")
+  // const my3d  = useGLTF("./my3d/my3d.gltf")
   return (
     <mesh>
       <hemisphereLight intensity={0.15} groundColor='black' />
@@ -46,7 +46,7 @@ const Computers = ({ isMobile }) => {
       />
       <pointLight intensity={1} />
       <primitive
-        object={isMobile ? my3d.scene : computer.scene}
+        object={computer.scene}
         scale={isMobile ? 0.5 : 0.75}  // Adjust scale for mobile
         position={isMobile ? [0, -2, -2] : [0, -3.25, -1.5]}
         rotation={isMobile ?[-0.02, -0.2, -0.1]:[-0.01, -0.2, -0.1]}
