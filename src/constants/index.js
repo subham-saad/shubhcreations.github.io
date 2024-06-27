@@ -192,6 +192,42 @@ import {
   
   const projects = [
     {
+      name: "Vectra Home Loans",
+      description:
+        "A web App for Home Loan Service in USA .",
+      tags: [
+        {
+          name: "React-Vite",
+          color: "blue-text-gradient",
+        },
+        {
+          name: "tailwind",
+          color: "pink-text-gradient",
+        },
+      ],
+      image: "",
+      source_code_link:"https://master--sunny-flan-462d81.netlify.app/",
+      
+    },
+    {
+      name: "HostEasy",
+      description:
+        "A AI Tool to manage the Airnb rental house .",
+      tags: [
+        {
+          name: "Next Js",
+          color: "blue-text-gradient",
+        },
+        {
+          name: "tailwind",
+          color: "pink-text-gradient",
+        },
+      ],
+      image:  remodel,
+      source_code_link:"https://www.hosteasy.ai/",
+      
+    },
+    {
       name: "495 Remodeling",
       description:
         "A web App for remodeling small busniess in USA .",
