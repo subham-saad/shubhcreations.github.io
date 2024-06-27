@@ -25,7 +25,9 @@ import {
     threejs,
     ecoom,
     moviesearch,
-    remodel
+    remodel, 
+    hosteasy,
+    vectra
     
     // SocialTek,
     // waveaxis
@@ -205,7 +207,7 @@ import {
           color: "pink-text-gradient",
         },
       ],
-      image: "",
+      image: vectra,
       source_code_link:"https://master--sunny-flan-462d81.netlify.app/",
       
     },
@@ -223,7 +225,7 @@ import {
           color: "pink-text-gradient",
         },
       ],
-      image:  remodel,
+      image:  hosteasy,
       source_code_link:"https://www.hosteasy.ai/",
       
     },

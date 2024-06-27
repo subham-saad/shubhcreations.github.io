@@ -64,5 +64,7 @@ export {
   tripguide,
   ecoom,
   moviesearch,
-  remodel
+  remodel,
+  hosteasy,
+  vectra
 };
