@@ -32,6 +32,8 @@ import tripguide from "./tripguide.png";
 import ecoom from "./ecoom.jpg";
 import moviesearch from "./moviesearch.png";
 import remodel from "./remodel.png"
+import vectra from "./vectra.png";
+import hosteasy from "./hosteasy.png"
 
 export {
   logo,
