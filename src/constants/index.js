@@ -128,7 +128,7 @@ import {
       company_name: "Betr Tech Pvt Ltd",
       // icon: SocialTek,
       iconBg:  "#E6DEDD",
-      date: "June 2024 - May 2024",
+      date: "June 2023 - May 2024",
       points: [
         "Developing and maintaining web applications using React.js and other related technologies.",
         "Collaborating with cross-functional teams including designers, product managers, and other developers to create high-quality products.",
