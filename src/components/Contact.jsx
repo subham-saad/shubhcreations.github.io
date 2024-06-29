@@ -10,7 +10,7 @@ import linkdin from "../assets/company/linkedin-logo.png"
 
 
 
-const resumeUrl = '/ShubhamResums.pdf'
+const resumeUrl = '/Shubham Sad (5).pdf'
 
 const Contact = () => {
   const formRef = useRef();
