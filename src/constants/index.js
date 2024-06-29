@@ -124,11 +124,11 @@ import {
   
   const experiences = [
     {
-      title: "Freelancer React Js Developer",
-      company_name: "Upwork",
+      title: "Full Stack Developer",
+      company_name: "Betr Tech Pvt Ltd",
       // icon: SocialTek,
       iconBg:  "#E6DEDD",
-      date: "August 2019 - August 2021",
+      date: "June 2024 - May 2024",
       points: [
         "Developing and maintaining web applications using React.js and other related technologies.",
         "Collaborating with cross-functional teams including designers, product managers, and other developers to create high-quality products.",
@@ -136,12 +136,13 @@ import {
         "Participating in code reviews and providing constructive feedback to other developers.",
       ],
     },
+  
     {
       title: "Full Stack Developer",
       company_name: "SocialTek",
       // icon: SocialTek,
       iconBg:  "#E6DEDD",
-      date: "August 2021 - May 2022",
+      date: "April 2021 - May 2022",
       points: [
         "Developing and maintaining web applications using React.js and other related technologies.",
         "Collaborating with cross-functional teams including designers, product managers, and other developers to create high-quality products.",
@@ -150,11 +151,25 @@ import {
       ],
     },
     {
-      title: "React Js Developer",
+      title: "Software Developer",
       company_name: "Waveaxis Pvt Ltd",
       // icon: waveaxis,
       iconBg: "#E6DEDD",
       date: "June 2022 - June 2023",
+      points: [
+        "Developing and maintaining web applications using React.js and other related technologies.",
+        "Collaborating with cross-functional teams including designers, product managers, and other developers to create high-quality products.",
+        "Implementing responsive design and ensuring cross-browser compatibility.",
+        "Participating in code reviews and providing constructive feedback to other developers.",
+      ],
+    },
+
+    {
+      title: "Freelancer React Js Developer",
+      company_name: "Upwork",
+      // icon: SocialTek,
+      iconBg:  "#E6DEDD",
+      date: "August 2019 - August 2021",
       points: [
         "Developing and maintaining web applications using React.js and other related technologies.",
         "Collaborating with cross-functional teams including designers, product managers, and other developers to create high-quality products.",
