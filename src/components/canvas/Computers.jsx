@@ -13,23 +13,24 @@ const useOptimizedGLTF = (path) => {
 
 const Computers = ({ isMobile }) => {
   const computer = useOptimizedGLTF("./desktop_pc/scene.gltf");
+  const mobile = useOptimizedGLTF("./models/model.gltf");
 
   return (
     <mesh>
       <hemisphereLight intensity={0.15} groundColor="black" />
       <spotLight
         position={isMobile ? [-20, 60, 10] : [-20, 50, 10]}
-        angle={isMobile ? 0.3 : 0.12} // Adjust light angle for mobile
+        angle={isMobile ? 0.3 : 0.12}
         penumbra={1}
-        intensity={isMobile ? 0.5 : 1} // Adjust light intensity for mobile
+        intensity={isMobile ? 0.5 : 1}
         castShadow
-        shadow-mapSize={isMobile ? 512 : 1024} // Adjust shadow map size for mobile
+        shadow-mapSize={isMobile ? 512 : 1024}
       />
       <pointLight intensity={1} />
       <primitive
-        object={computer.scene}
-        scale={isMobile ? 0.5 : 0.75} // Adjust scale for mobile
-        position={isMobile ? [0, -2, -2] : [0, -3.25, -1.5]}
+        object={isMobile ? mobile.scene : computer.scene}
+        scale={isMobile ? 0.9 : 0.75}
+        position={isMobile ? [0, -1.6, -1.6] : [0, -3.25, -1.5]}
         rotation={isMobile ? [-0.02, -0.2, -0.1] : [-0.01, -0.2, -0.1]}
       />
     </mesh>
