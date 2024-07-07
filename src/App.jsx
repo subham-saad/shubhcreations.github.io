@@ -19,9 +19,14 @@ const App = () => {
         <Suspense fallback={<div><Loader /></div>}>
         <Helmet>
             <title>Shubham | Creations - Freelance Frontend & MERN Stack Developer</title>
-            <meta name="description" content="Full Stack Developer Shubham-Creation" />
+            <meta name="description" content="Freelance Full Stack Developer Shubham-Creation" />
             <meta property="og:title" content="Shubham-Creation" />
-            <meta property="og:description" content="MERN Stack Developer" />
+            <meta property="og:description" content="Freelance Frontend Developer, MERN Stack Developer, JavaScript Developer, React JS Developer. Offering professional web development services."/>
+            <meta property="og:description" content=" Freelance React JS Developer" />
+            <meta name="twitter:card" content="summary_large_image"/>
+            <meta name="twitter:title" content="Shubham | Creations - Freelance Web Developer"/>
+            <meta name="twitter:description" content="Freelance Frontend Developer, MERN Stack Developer, JavaScript Developer, React JS Developer. Offering professional web development services."/>
+            <meta property="og:description" content=" Freelance MERN Stack Developer" />
             <meta property="og:url" content="https://shubhamcreation.netlify.app/" />
             <meta property="og:type" content="website" />
           </Helmet>
