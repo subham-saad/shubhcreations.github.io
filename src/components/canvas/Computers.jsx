@@ -128,7 +128,7 @@ const Computers = ({ isMobile }) => {
       )}
       <primitive
         object={isMobile ? mobile.scene : computer.scene}
-        scale={isMobile ? 1.10 : 0.75} // Adjust scale for mobile
+        scale={isMobile ? 1 : 0.75} // Adjust scale for mobile
         position={isMobile ? [0, -2, 0] : [0, -3.25, -1.5]} // Center position for mobile
         rotation={isMobile ? [0, 0, 0] : [-0.01, -0.2, -0.1]} // Default rotation for mobile
       />
