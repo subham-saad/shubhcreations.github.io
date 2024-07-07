@@ -1,3 +1,4 @@
+import { Loader } from '@react-three/drei';
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -15,8 +16,8 @@ const App = () => {
   return (
     <BrowserRouter>
       <div className='relative z-0 bg-primary'>
-        <Suspense fallback={<div>Loading...</div>}>
-          <div className='bg-hero-pattern bg-cover bg-no-repeat bg-center'>
+        <Suspense fallback={<div><Loader /></div>}>
+          <div className=' bg-black sm:bg-hero-pattern bg-cover bg-no-repeat bg-center'>
             <Navbar />
             <Hero />
           </div>
