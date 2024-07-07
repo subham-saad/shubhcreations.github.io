@@ -21,6 +21,7 @@ const App = () => {
         <Helmet>
             <title>Shubham | Creations - Freelance Frontend & MERN Stack Developer</title>
             <meta name="description" content="Freelance Full Stack Developer Shubham-Creation" />
+            <meta name="google-site-verification" content="QpBEZMdz3JSfthSRTxzgIJGzfm2GeDlT5Vs-GEwXctk" />
             <meta property="og:title" content="Shubham-Creation" />
             <meta property="og:description" content="Freelance Frontend Developer, MERN Stack Developer, JavaScript Developer, React JS Developer. Offering professional web development services."/>
             <meta property="og:description" content=" Freelance React JS Developer" />
