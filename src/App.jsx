@@ -1,6 +1,7 @@
 import { Loader } from '@react-three/drei';
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 
 const About = lazy(() => import('./components').then(module => ({ default: module.About })));
 const Contact = lazy(() => import('./components').then(module => ({ default: module.Contact })));
