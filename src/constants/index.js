@@ -345,7 +345,7 @@ import {
     {
       name: "Shoperchoice",
       description:
-        "A Ecom Web App",
+        "The Ecommerce Web App",
       tags: [
         {
           name: "react",
