@@ -34,6 +34,7 @@ import moviesearch from "./moviesearch.png";
 import remodel from "./remodel.png"
 import vectra from "./vectra.png";
 import hosteasy from "./hosteasy.png"
+import zone5 from "./zone5.jpeg"
 
 export {
   logo,
@@ -68,5 +69,6 @@ export {
   moviesearch,
   remodel,
   hosteasy,
-  vectra
+  vectra,
+  zone5
 };

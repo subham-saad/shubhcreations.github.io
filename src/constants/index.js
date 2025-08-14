@@ -27,7 +27,8 @@ import {
     moviesearch,
     remodel, 
     hosteasy,
-    vectra
+    vectra,
+    zone5
     
     // SocialTek,
     // waveaxis
@@ -123,6 +124,32 @@ import {
   ];
   
   const experiences = [
+     {
+      title: "Full Stack Developer",
+      company_name: "Uniqueconcept Pvt Ltd",
+      // icon: SocialTek,
+      iconBg:  "#E6DEDD",
+      date: "November 2024 - Present",
+      points: [
+        "Developing and maintaining web applications using Next.js and React js, Node.js, Express.js, Postgresql, Redis.",
+        "Collaborating with cross-functional teams including designers, product managers, and other developers to create high-quality products.",
+        "Implementing responsive design and ensuring cross-browser compatibility.",
+        "Participating in code reviews and providing constructive feedback to other developers.",
+      ],
+    },
+    {
+      title: "Full Stack Developer",
+      company_name: "Hosteasy.Ai",
+      // icon: SocialTek,
+      iconBg:  "#E6DEDD",
+      date: "June 2024 - November 2024",
+      points: [
+        "Developing and maintaining web applications using Next.js and OpenAI Api.",
+        "Collaborating with cross-functional teams including designers, product managers, and other developers to create high-quality products.",
+        "Implementing responsive design and ensuring cross-browser compatibility.",
+        "Participating in code reviews and providing constructive feedback to other developers.",
+      ],
+    },
     {
       title: "Full Stack Developer",
       company_name: "Betr Tech Pvt Ltd",
@@ -210,6 +237,36 @@ import {
   ];
   
   const projects = [
+     {
+      name: "Zone5.Ai",
+      description:
+        "A web App for selling gifts and Qa of gifts .",
+      tags: [
+        {
+          name: "React-Vite",
+          color: "blue-text-gradient",
+        },
+        {
+          name: "tailwind",
+          color: "pink-text-gradient",
+        },
+         {
+          name: "Node",
+          color: "blue-text-gradient",
+        },
+        {
+          name: "Express",
+          color: "pink-text-gradient",
+        },
+        {
+          name: "Postgrsql",
+          color: "blue-text-gradient",
+        },
+      ],
+      image: zone5,
+      source_code_link:"https://dev.zone5.ai",
+      
+    },
     {
       name: "Vectra Home Loans",
       description:
