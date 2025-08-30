@@ -6,7 +6,7 @@ import { styles } from "../styles";
 import { EarthCanvas } from "./canvas";
 import { SectionWrapper } from "../hoc";
 import { slideIn } from "../utils/motion";
-import linkdin from "../assets/company/linkedin-logo.png"
+import { FaXTwitter, FaGithub, FaLinkedinIn } from "react-icons/fa6";
 
 
 
@@ -78,11 +78,11 @@ const handleDownload = () => {
 
   return (
     <div
-      className={`xl:mt-12 flex xl:flex-row flex-col-reverse gap-10 overflow-hidden`}
+      className={`xl:mt-12 flex xl:flex-row flex-col-reverse gap-10 overflow-hiddenW`}
     >
       <motion.div
         variants={slideIn("left", "tween", 0.2, 1)}
-        className='flex-[0.75] bg-black-100 p-8 rounded-2xl'
+        className='flex-[0.55] bg-black-100 p-5 rounded-2xl'
       >
   
         <p className={styles.sectionSubText}>Get in touch</p>
@@ -135,6 +135,12 @@ const handleDownload = () => {
           </button>
 
         </form>
+        <h3 className={`${styles.sectionSubText} text-center my-6`}>Or Connect with me on</h3>
+        <div className="flex flex-row justify-center gap-6">
+          <a href="https://x.com/subham_creaton?t=CUpGXXkofDnJX8SG8HxeaQ&s=08" target="_blank"><FaXTwitter className="text-white hover:text-[#1DA1F2] text-3xl cursor-pointer"/></a>
+          <a href="https://github.com/subham-saad" target="_blank"><FaGithub className="text-white hover:text-[#4078c0] text-3xl cursor-pointer"/></a>
+          <a href="https://www.linkedin.com/in/shubham-sad-6a2078214/" target="_blank"><FaLinkedinIn className="text-white hover:text-[#0A66C2] text-3xl cursor-pointer"/></a>
+        </div>
 
       </motion.div>
    
