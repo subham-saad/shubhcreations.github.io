@@ -11,20 +11,8 @@ const useOptimizedGLTF = (path) => {
 };
 
 const Computers = ({ isMobile }) => {
-  const computer = useOptimizedGLTF("./desktop_pc/scene.gltf", {
-    // Disable animations and reduce quality for mobile
-    draco: { decodeSpeed: 5 },
-    materials: { unlit: true },
-    meshopt: { encodeVertexNormals: false },
-    preload: false,
-  });
-  const mobile = useOptimizedGLTF("./models/phone.gltf", {
-    // Disable animations and reduce quality for mobile
-    draco: { decodeSpeed: 5 },
-    materials: { unlit: true },
-    meshopt: { encodeVertexNormals: false },
-    preload: false,
-  });
+  const computer = useOptimizedGLTF("./desktop_pc/scene.gltf");
+  const mobile = useOptimizedGLTF("./models/phone.gltf");
   const meshRef = useRef();
 
   // Use the useFrame hook to rotate the mesh if it is a mobile device
@@ -89,8 +77,8 @@ const ComputersCanvas = () => {
     <Canvas
       frameloop="demand"
       shadows
-      dpr={[1, isMobile ? 1 : 2]}
-      camera={{ position: [20, 3, 5], fov: isMobile ? 30 : 25 }}
+      dpr={[1, 2]}
+      camera={{ position: [20, 3, 5], fov: 25 }}
       gl={{ preserveDrawingBuffer: true, alpha: true }}
     >
       <Suspense fallback={<CanvasLoader />}>
@@ -99,7 +87,6 @@ const ComputersCanvas = () => {
           enableZoom={false}
           maxPolarAngle={Math.PI / 2}
           minPolarAngle={Math.PI / 2}
-          rotateSpeed={isMobile ? 0.2 : 1.5}
         />
         <Computers isMobile={isMobile} />
       </Suspense>
