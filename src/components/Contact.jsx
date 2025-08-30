@@ -136,7 +136,7 @@ const handleDownload = () => {
 
         </form>
         <h3 className={`${styles.sectionSubText} text-center my-6`}>Or Connect with me on</h3>
-        <div className="flex flex-row justify-center gap-6">
+        <div className="flex flex-row justify-center w-[70%] gap-6">
           <a href="https://x.com/subham_creaton?t=CUpGXXkofDnJX8SG8HxeaQ&s=08" target="_blank"><FaXTwitter className="text-white hover:text-[#1DA1F2] text-3xl cursor-pointer"/></a>
           <a href="https://github.com/subham-saad" target="_blank"><FaGithub className="text-white hover:text-[#4078c0] text-3xl cursor-pointer"/></a>
           <a href="https://www.linkedin.com/in/shubham-sad-6a2078214/" target="_blank"><FaLinkedinIn className="text-white hover:text-[#0A66C2] text-3xl cursor-pointer"/></a>

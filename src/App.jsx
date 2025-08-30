@@ -32,7 +32,7 @@ const App = () => {
             <meta property="og:url" content="https://shubhamcreation.netlify.app/" />
             <meta property="og:type" content="website" />
           </Helmet>
-          <div className=' bg-black sm:bg-hero-pattern bg-cover bg-no-repeat bg-center'>
+          <div className=' bg-black sm:bg-hero-pattern bg-hero-pattern bg-cover bg-no-repeat bg-center'>
             <Navbar />
             <Hero />
           </div>
