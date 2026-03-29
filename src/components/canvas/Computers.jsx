@@ -11,8 +11,7 @@ const useOptimizedGLTF = (path) => {
 };
 
 const Computers = ({ isMobile }) => {
-  const computer = useOptimizedGLTF("./desktop_pc/scene.gltf");
-  const mobile = useOptimizedGLTF("./models/phone.gltf");
+  const computer = useGLTF(isMobile ? "./models/phone.gltf" : "./desktop_pc/scene.gltf");
   const meshRef = useRef();
 
   // Use the useFrame hook to rotate the mesh if it is a mobile device
@@ -45,7 +44,7 @@ const Computers = ({ isMobile }) => {
         />
       )}
       <primitive
-        object={isMobile ? mobile.scene : computer.scene}
+        object={computer.scene}
         scale={isMobile ? 1 : 0.75} // Adjust scale for mobile
         position={isMobile ? [0, -2, 0] : [0, -3.25, -1.5]} // Center position for mobile
         rotation={isMobile ? [0, 0, 0] : [-0.01, -0.2, -0.1]} // Default rotation for mobile
