@@ -93,28 +93,60 @@ const handleDownload = () => {
           onSubmit={handleSubmit}
           className='mt-12 flex flex-col gap-8'
         >
-          <label className='flex flex-col'>
-            <span className='text-white font-medium mb-4'>Your Name</span>
-            <input
-              type='text'
-              name='name'
-              value={form.name}
-              onChange={handleChange}
-              placeholder="What's your good name?"
-              className='bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium'
-            />
-          </label>
-          <label className='flex flex-col'>
-            <span className='text-white font-medium mb-4'>Your email</span>
-            <input
-              type='email'
-              name='email'
-              value={form.email}
-              onChange={handleChange}
-              placeholder="What's your web address?"
-              className='bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium'
-            />
-          </label>
+          <div className="grid md:grid-cols-2 gap-8">
+            <label className='flex flex-col'>
+              <span className='text-white font-medium mb-4'>Your Name</span>
+              <input
+                type='text'
+                name='name'
+                value={form.name}
+                onChange={handleChange}
+                placeholder="What's your name?"
+                className='bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium'
+              />
+            </label>
+            <label className='flex flex-col'>
+              <span className='text-white font-medium mb-4'>Your Email</span>
+              <input
+                type='email'
+                name='email'
+                value={form.email}
+                onChange={handleChange}
+                placeholder="What's your email?"
+                className='bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium'
+              />
+            </label>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <label className='flex flex-col'>
+              <span className='text-white font-medium mb-4'>Project Type</span>
+              <select
+                name='projectType'
+                onChange={handleChange}
+                className='bg-tertiary py-4 px-6 text-white rounded-lg outline-none border-none font-medium'
+              >
+                <option value="saas">SaaS Platform</option>
+                <option value="ai">AI / Automation</option>
+                <option value="dashboard">Custom Dashboard</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label className='flex flex-col'>
+              <span className='text-white font-medium mb-4'>Estimated Budget</span>
+              <select
+                name='budget'
+                onChange={handleChange}
+                className='bg-tertiary py-4 px-6 text-white rounded-lg outline-none border-none font-medium'
+              >
+                <option value="<5k">Less than $5,000</option>
+                <option value="5k-10k">$5,000 - $10,000</option>
+                <option value="10k-25k">$10,000 - $25,000</option>
+                <option value="25k+">$25,000+</option>
+              </select>
+            </label>
+          </div>
+
           <label className='flex flex-col'>
             <span className='text-white font-medium mb-4'>Your Message</span>
             <textarea
@@ -122,16 +154,16 @@ const handleDownload = () => {
               name='message'
               value={form.message}
               onChange={handleChange}
-              placeholder='What you want to say?'
+              placeholder='Tell me about your project goals...'
               className='bg-tertiary py-4 px-6 placeholder:text-secondary text-white rounded-lg outline-none border-none font-medium'
             />
           </label>
 
           <button
             type='submit'
-            className='bg-tertiary py-3 px-8 rounded-xl outline-none w-fit text-white font-bold shadow-md shadow-primary'
+            className='bg-[#46db87] py-3 px-10 rounded-xl outline-none w-fit text-primary font-bold shadow-md shadow-primary hover:bg-[#34a865] transition-all'
           >
-            {loading ? "Sending..." : "Send"}
+            {loading ? "Sending..." : "Book a Free Strategy Call"}
           </button>
 
         </form>

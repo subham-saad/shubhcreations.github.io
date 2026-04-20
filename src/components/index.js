@@ -7,6 +7,9 @@ import Experience from './Experience';
 import Works from './Works';
 import Feedbacks from './Feedbacks';
 import Contact from './Contact';
+import Process from './Process';
+import WhyMe from './WhyMe';
+import Estimator from './Estimator';
 
 export {
   Hero,
@@ -20,5 +23,8 @@ export {
   EarthCanvas, 
   BallCanvas, 
   ComputersCanvas, 
-  StarsCanvas
+  StarsCanvas,
+  Process,
+  WhyMe,
+  Estimator
 }

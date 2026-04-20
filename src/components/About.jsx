@@ -39,19 +39,19 @@ const About = () => {
   return (
     <>
       <motion.div variants={textVariant()}>
-        <p className={styles.sectionSubText}>Introduction</p>
-        <h2 className={styles.sectionHeadText}>Overview.</h2>
+        <p className={styles.sectionSubText}>My Mission</p>
+        <h2 className={styles.sectionHeadText}>Engineering Business Value.</h2>
       </motion.div>
 
       <motion.p
         variants={fadeIn("", "", 0.1, 1)}
         className='mt-4 text-secondary text-[17px] max-w-3xl leading-[30px]'
       >
-        I'm a skilled software developer with experience in TypeScript and
-        JavaScript, and expertise in frameworks like React, Node.js, and
-        Three.js. I'm a quick learner and collaborate closely with clients to
-        create efficient, scalable, and user-friendly solutions that solve
-        real-world problems. Let's work together to bring your ideas to life!
+        I am a product-minded developer specializing in high-performance SaaS
+        architectures and AI-driven automation. With a deep understanding of
+        modern web ecosystems, I bridge the gap between complex technical
+        challenges and business objectives. My mission is to build digital products
+        that don't just work—they perform, scale, and deliver measurable ROI.
       </motion.p>
     
       <div className='mt-20 flex banner flex-wrap gap-10'>

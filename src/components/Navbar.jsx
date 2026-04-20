@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { styles } from "../styles";
 import { navLinks } from "../constants";
-import { logo, menu, close } from "../assets";
+import { logo, menu, close, Swastik } from "../assets";
 
 const Navbar = () => {
   const [active, setActive] = useState("");
@@ -52,11 +52,10 @@ const handleDownload = () => {
         >
          <div className="flex items-center space-x-4 m-0">
          <span className=" rounded-full p-0 ">
-            <img src="myimg.jpeg" alt="myphoto"  height={50} width={50} className=" opacity-[0.9] rounded-[90%] p-0" />
+            <img src={Swastik} alt="myphoto"  height={50} width={50} className=" opacity-[0.9] rounded-[90%] p-0" />
           </span>
-          <p className='text-white text-[12px] sm:text-[20px]  p-2  font-bold cursor-pointer flex '>
-            Shubham | Creations
-          
+          <p className='text-yellow-600 text-[12px] sm:text-[20px]  p-2  font-bold cursor-pointer flex '>
+            Shreepitambara | Creations
           </p>
         
           </div>

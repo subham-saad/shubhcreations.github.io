@@ -11,7 +11,10 @@ const Navbar = lazy(() => import('./components').then(module => ({ default: modu
 const Tech = lazy(() => import('./components').then(module => ({ default: module.Tech })));
 const Works = lazy(() => import('./components').then(module => ({ default: module.Works })));
 const StarsCanvas = lazy(() => import('./components').then(module => ({ default: module.StarsCanvas })));
-// const Feedbacks = lazy(() => import('./components').then(module => ({ default: module.Feedbacks })));
+const WhyMe = lazy(() => import('./components').then(module => ({ default: module.WhyMe })));
+const Process = lazy(() => import('./components').then(module => ({ default: module.Process })));
+const Estimator = lazy(() => import('./components').then(module => ({ default: module.Estimator })));
+const Feedbacks = lazy(() => import('./components').then(module => ({ default: module.Feedbacks })));
 
 const App = () => {
   return (
@@ -37,10 +40,13 @@ const App = () => {
             <Hero />
           </div>
           <About />
+          <WhyMe />
           <Experience />
+          <Process />
           <Tech />
           <Works />
-          {/* <Feedbacks /> */}
+          <Estimator />
+          <Feedbacks />
           <div className='relative z-0'>
             <Contact />
             <StarsCanvas />
